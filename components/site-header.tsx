@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Menu, X } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Logo } from "@/components/ui/logo";
 import { SearchDialog } from "@/components/search-dialog";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -11,10 +11,25 @@ const links = [["Arena", "/"], ["Discover", "/discover"], ["Agents", "/agents"],
 
 export function SiteHeader() {
   const [open, setOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
   const pathname = usePathname();
+
+  useEffect(() => {
+    function onScroll() {
+      setScrolled(window.scrollY > 16);
+    }
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
   return (
-    <header className="sticky top-0 z-50 border-b border-line bg-canvas/85 backdrop-blur-xl">
-      <div className="container flex h-16 items-center justify-between gap-4">
+    <header
+      className={`sticky top-0 z-50 border-b bg-canvas/85 backdrop-blur-xl transition-colors duration-300 ${
+        scrolled ? "border-line" : "border-transparent"
+      }`}
+    >
+      <div className={`container flex items-center justify-between gap-4 transition-[padding] duration-300 ${scrolled ? "py-3" : "py-6"}`}>
         <Logo />
         <nav className="hidden items-center gap-1 lg:flex">
           {links.map(([label, href]) => (

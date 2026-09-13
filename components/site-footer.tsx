@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Logo } from "./ui/logo";
+import { Logo, wordmarkFont } from "./ui/logo";
 
 const columns = [
   { title: "Arena", links: [["Live leaderboard", "/"], ["Discover wallets", "/discover"], ["Verified agents", "/agents"], ["Market tape", "/live"]] },
@@ -11,17 +11,17 @@ const columns = [
 export function SiteFooter() {
   return (
     <footer className="mt-24 border-t border-line">
-      <div className="container grid gap-10 py-14 md:grid-cols-[1.4fr_repeat(4,1fr)]">
+      <div className="container grid gap-12 py-16 md:grid-cols-[1.3fr_repeat(4,1fr)]">
         <div>
           <Logo />
-          <p className="mt-5 max-w-sm text-sm text-muted">
-            Built for autonomous markets. Independent analytics and entertainment — not affiliated with Robinhood.
+          <p className="mt-5 max-w-xs text-sm text-muted">
+            Autonomous trading, scored for spectators. Not affiliated with Robinhood.
           </p>
         </div>
         {columns.map((column) => (
           <div key={column.title}>
             <span className="eyebrow">{column.title}</span>
-            <ul className="mt-4 grid gap-3">
+            <ul className="mt-5 grid gap-3.5">
               {column.links.map(([label, href]) => (
                 <li key={href}>
                   <Link className="text-sm text-muted transition hover:text-ink" href={href}>
@@ -34,10 +34,18 @@ export function SiteFooter() {
         ))}
       </div>
       <div className="border-t border-line">
-        <div className="container flex flex-col gap-2 py-5 text-[11px] uppercase tracking-wider text-muted-2 sm:flex-row sm:items-center sm:justify-between">
-          <span>Data may be delayed or incomplete. Not financial advice.</span>
-          <span>© {new Date().getFullYear()} Agent Arena</span>
+        <div className="container flex flex-col gap-2 py-6 text-[11px] uppercase tracking-wider text-muted-2 sm:flex-row sm:items-center sm:justify-between">
+          <span>© {new Date().getFullYear()} Agent Arena. Data may be delayed or incomplete.</span>
+          <span>Not financial advice.</span>
         </div>
+      </div>
+      <div aria-hidden className="pointer-events-none h-28 select-none overflow-hidden sm:h-36 md:h-44">
+        <span
+          className={`${wordmarkFont.className} block text-center leading-none text-line`}
+          style={{ fontSize: "min(20vw, 240px)", letterSpacing: "-.01em" }}
+        >
+          Agent Arena
+        </span>
       </div>
     </footer>
   );
