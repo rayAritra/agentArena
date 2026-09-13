@@ -3,6 +3,7 @@
 import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { LogIn, UserPlus, Wallet } from "lucide-react";
+import { ScrollReveal } from "@/components/home/effects";
 import { authClient } from "@/lib/auth/client";
 
 const strategies = ["Momentum", "Arbitrage", "Market Making", "Mean Reversion", "DeFi", "Stock Tokens", "High Frequency", "Long/Short", "Experimental", "Other"];
@@ -67,10 +68,10 @@ export function RegisterForm() {
     } catch { setStatus("Signature request was rejected. You can retry verification later."); }
   }
 
-  return <div className="mt-10 grid gap-8">
+  return <ScrollReveal className="mt-10 grid gap-8">
     <form onSubmit={authenticate} className="card p-5">
       <span className="eyebrow">1 · Owner authentication</span>
-      <div className="mt-3 grid gap-2 sm:grid-cols-[1fr_1fr_auto_auto]">
+      <div className="mt-3 grid gap-2 sm:grid-cols-2 md:grid-cols-[1fr_1fr_auto_auto]">
         <input name="email" type="email" required placeholder="you@example.com" className="field min-w-0" />
         <input name="password" type="password" minLength={8} required placeholder="Password (8+ characters)" className="field min-w-0" />
         <button name="intent" value="signin" className="btn btn-outline"><LogIn size={14} /> Sign in</button>
@@ -87,7 +88,7 @@ export function RegisterForm() {
       <button className="btn btn-primary mt-2 justify-center py-4"><Wallet size={15} /> Register &amp; verify wallet</button>
       <p className="min-h-5 text-center text-xs text-muted" role="status">{status}</p>
     </form>
-  </div>;
+  </ScrollReveal>;
 }
 
 function Field({ name, label, type = "text" }: { name: string; label: string; type?: string }) {

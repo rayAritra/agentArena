@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import {
   Activity,
+  ArrowDownRight,
   ArrowUpRight,
   Database,
   Eye,
@@ -10,6 +11,9 @@ import {
   ShieldCheck,
   WalletCards,
 } from "lucide-react";
+import { ScrollReveal } from "@/components/home/effects";
+import { DataRow } from "@/components/ui/data-row";
+import { MetricStrip } from "@/components/ui/metric-strip";
 import { AddressLookup } from "@/components/wallet/address-lookup";
 import { getPublicWalletProfile } from "@/lib/data/wallet-profile";
 import { walletSchema } from "@/lib/validation/agent";
@@ -45,14 +49,14 @@ async function WalletProfile({address}:{address:string}) {
     profile.metrics.observedRealizedPnlUsd +
     profile.metrics.observedUnrealizedPnlUsd;
   const metrics = [
-    ["Portfolio mark", usd(profile.metrics.portfolioValueUsd)],
-    ["Observed P&L", usd(pnl)],
-    ["Realized", usd(profile.metrics.observedRealizedPnlUsd)],
-    ["Unrealized", usd(profile.metrics.observedUnrealizedPnlUsd)],
-    ["Trade volume", usd(profile.metrics.observedVolumeUsd, true)],
-    ["Classified trades", String(profile.metrics.classifiedTrades)],
-    ["Win rate", `${profile.metrics.winRate.toFixed(1)}%`],
-    ["All transfers", profile.counters.tokenTransfers.toLocaleString()],
+    { label: "Portfolio mark", value: usd(profile.metrics.portfolioValueUsd) },
+    { label: "Observed P&L", value: usd(pnl), tone: pnl >= 0 ? "positive" as const : "negative" as const },
+    { label: "Realized", value: usd(profile.metrics.observedRealizedPnlUsd), tone: profile.metrics.observedRealizedPnlUsd >= 0 ? "positive" as const : "negative" as const },
+    { label: "Unrealized", value: usd(profile.metrics.observedUnrealizedPnlUsd), tone: profile.metrics.observedUnrealizedPnlUsd >= 0 ? "positive" as const : "negative" as const },
+    { label: "Trade volume", value: usd(profile.metrics.observedVolumeUsd, true) },
+    { label: "Classified trades", value: String(profile.metrics.classifiedTrades) },
+    { label: "Win rate", value: `${profile.metrics.winRate.toFixed(1)}%` },
+    { label: "All transfers", value: profile.counters.tokenTransfers.toLocaleString() },
   ];
   return (
     <div className="container py-12">
@@ -80,7 +84,7 @@ async function WalletProfile({address}:{address:string}) {
             APIs. No account, registration, or wallet connection was used.
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           {profile.registeredAgent && (
             <Link
               href={`/agent/${profile.registeredAgent.slug}`}
@@ -105,19 +109,10 @@ async function WalletProfile({address}:{address:string}) {
           refreshed. Available endpoint data is still shown below.
         </div>
       )}
-      <div className="card grid grid-cols-2 divide-x divide-y divide-line md:grid-cols-4 xl:grid-cols-8 xl:divide-y-0">
-        {metrics.map(([label, value]) => (
-          <div className="py-5 px-4" key={label}>
-            <span className="eyebrow block text-[9px]">{label}</span>
-            <strong
-              className={`mt-2 block font-mono text-lg ${label.includes("P&L") || label === "Realized" || label === "Unrealized" ? (String(value).startsWith("-") ? "negative" : "positive") : ""}`}
-            >
-              {value}
-            </strong>
-          </div>
-        ))}
+      <div className="card overflow-hidden">
+        <MetricStrip className="grid-cols-2 md:grid-cols-4 xl:grid-cols-8" items={metrics} />
       </div>
-      <div className="mt-6 grid gap-5 md:grid-cols-3">
+      <ScrollReveal className="mt-6 grid gap-5 md:grid-cols-3">
         <Info
           icon={<Activity size={16} />}
           label="Last API activity"
@@ -143,7 +138,7 @@ async function WalletProfile({address}:{address:string}) {
               : "Public wallet · AI control unknown"
           }
         />
-      </div>
+      </ScrollReveal>
       <section className="mt-14">
         <div className="flex items-end justify-between pb-4">
           <div>
@@ -153,61 +148,21 @@ async function WalletProfile({address}:{address:string}) {
           <WalletCards className="text-muted" />
         </div>
         {profile.holdings.length ? (
-          <div className="card overflow-x-auto">
-            <table className="table-clean min-w-[760px]">
-              <thead>
-                <tr>
-                  {[
-                    "Asset",
-                    "Type",
-                    "Quantity",
-                    "API price",
-                    "Marked value",
-                    "Contract",
-                  ].map((label) => (
-                    <th key={label}>
-                      {label}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {profile.holdings.map((holding) => (
-                  <tr
-                    className="font-mono"
-                    key={holding.tokenAddress}
-                  >
-                    <td className="font-black">
-                      {holding.symbol}
-                      <span className="ml-2 font-sans text-xs font-normal text-muted">
-                        {holding.name}
-                      </span>
-                    </td>
-                    <td>{holding.kind}</td>
-                    <td>
-                      {holding.quantity.toLocaleString(undefined, {
-                        maximumFractionDigits: 8,
-                      })}
-                    </td>
-                    <td>
-                      {holding.priceUsd ? usd(holding.priceUsd) : "Unavailable"}
-                    </td>
-                    <td>{holding.priceUsd ? usd(holding.valueUsd) : "—"}</td>
-                    <td>
-                      <a
-                        className="text-brand"
-                        target="_blank"
-                        rel="noreferrer"
-                        href={`https://robinhoodchain.blockscout.com/token/${holding.tokenAddress}`}
-                      >
-                        {compactAddress(holding.tokenAddress)}
-                      </a>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <ScrollReveal className="card grid gap-3 p-4 sm:p-6">
+            {profile.holdings.map((holding) => (
+              <DataRow
+                key={holding.tokenAddress}
+                href={`https://robinhoodchain.blockscout.com/token/${holding.tokenAddress}`}
+                external
+                icon={holding.symbol.slice(0, 4)}
+                iconTone="accent"
+                title={holding.symbol}
+                subtitle={`${holding.name} · ${holding.kind} · ${holding.quantity.toLocaleString(undefined, { maximumFractionDigits: 8 })} qty`}
+                trailing={holding.priceUsd ? usd(holding.valueUsd) : "—"}
+                trailingSub={holding.priceUsd ? `${usd(holding.priceUsd)}/unit` : "Price unavailable"}
+              />
+            ))}
+          </ScrollReveal>
         ) : (
           <p className="card py-10 text-center text-muted">
             No ERC-20 balances were returned for this address.
@@ -220,64 +175,21 @@ async function WalletProfile({address}:{address:string}) {
           <h2 className="mt-2 text-2xl font-black tracking-[-.02em]">Observed executions</h2>
         </div>
         {profile.recentTrades.length ? (
-          <div className="card overflow-x-auto">
-            <table className="table-clean min-w-[850px]">
-              <thead>
-                <tr>
-                  {[
-                    "UTC time",
-                    "Side",
-                    "Asset",
-                    "Quantity",
-                    "Execution price",
-                    "Notional",
-                    "Fee",
-                    "Block",
-                    "Transaction",
-                  ].map((label) => (
-                    <th key={label}>
-                      {label}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {profile.recentTrades.map((trade) => (
-                  <tr
-                    className="font-mono"
-                    key={`${trade.txHash}-${trade.symbol}-${trade.side}`}
-                  >
-                    <td>
-                      {new Date(trade.tradedAt).toLocaleString("en-US", {
-                        timeZone: "UTC",
-                      })}
-                    </td>
-                    <td
-                      className={trade.side === "buy" ? "positive" : "negative"}
-                    >
-                      {trade.side.toUpperCase()}
-                    </td>
-                    <td className="font-black">{trade.symbol}</td>
-                    <td>{trade.quantity}</td>
-                    <td>{usd(trade.priceUsd)}</td>
-                    <td>{usd(trade.notionalUsd)}</td>
-                    <td>{usd(trade.feeUsd)}</td>
-                    <td>{trade.blockNumber}</td>
-                    <td>
-                      <a
-                        className="text-brand"
-                        target="_blank"
-                        rel="noreferrer"
-                        href={`https://robinhoodchain.blockscout.com/tx/${trade.txHash}`}
-                      >
-                        {compactAddress(trade.txHash)}
-                      </a>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <ScrollReveal className="card grid gap-3 p-4 sm:p-6">
+            {profile.recentTrades.map((trade) => (
+              <DataRow
+                key={`${trade.txHash}-${trade.symbol}-${trade.side}`}
+                href={`https://robinhoodchain.blockscout.com/tx/${trade.txHash}`}
+                external
+                iconTone={trade.side === "buy" ? "positive" : "negative"}
+                icon={trade.side === "buy" ? <ArrowUpRight size={16} /> : <ArrowDownRight size={16} />}
+                title={`${trade.side.toUpperCase()} ${trade.symbol}`}
+                subtitle={new Date(trade.tradedAt).toLocaleString("en-US", { timeZone: "UTC" }) + " UTC"}
+                trailing={usd(trade.notionalUsd)}
+                trailingSub={`${usd(trade.priceUsd)}/unit · fee ${usd(trade.feeUsd)}`}
+              />
+            ))}
+          </ScrollReveal>
         ) : (
           <p className="card py-10 text-center text-muted">
             No qualifying Stock Token/USDG executions were found in the loaded
@@ -290,36 +202,21 @@ async function WalletProfile({address}:{address:string}) {
           <span className="eyebrow">Explorer transaction endpoint</span>
           <h2 className="mt-2 text-2xl font-black tracking-[-.02em]">Raw activity</h2>
         </div>
-        <div className="card divide-y divide-line">
+        <ScrollReveal className="card grid gap-3 p-4 sm:p-6">
           {profile.recentTransactions.slice(0, 20).map((transaction) => (
-            <a
-              target="_blank"
-              rel="noreferrer"
-              href={`https://robinhoodchain.blockscout.com/tx/${transaction.hash}`}
+            <DataRow
               key={transaction.hash}
-              className="grid gap-2 px-5 py-4 text-xs transition hover:bg-surface-2 md:grid-cols-[180px_1fr_120px_100px]"
-            >
-              <time className="font-mono text-muted">
-                {new Date(transaction.timestamp).toLocaleString("en-US", {
-                  timeZone: "UTC",
-                })}{" "}
-                UTC
-              </time>
-              <span className="font-mono">
-                {compactAddress(transaction.hash)} ·{" "}
-                {transaction.method ?? "transfer"}
-              </span>
-              <span>Block {transaction.blockNumber}</span>
-              <span
-                className={
-                  transaction.status === "success" ? "positive" : "negative"
-                }
-              >
-                {transaction.status.toUpperCase()}
-              </span>
-            </a>
+              href={`https://robinhoodchain.blockscout.com/tx/${transaction.hash}`}
+              external
+              iconTone={transaction.status === "success" ? "positive" : "negative"}
+              icon={compactAddress(transaction.hash).slice(0, 4)}
+              title={transaction.method ?? "transfer"}
+              subtitle={`${new Date(transaction.timestamp).toLocaleString("en-US", { timeZone: "UTC" })} UTC · block ${transaction.blockNumber}`}
+              trailing={<span className={transaction.status === "success" ? "positive" : "negative"}>{transaction.status.toUpperCase()}</span>}
+              trailingSub={compactAddress(transaction.hash)}
+            />
           ))}
-        </div>
+        </ScrollReveal>
       </section>
       <div className="mt-14">
         <AddressLookup compact />

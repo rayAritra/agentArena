@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ArrowUpRight, Eye, ShieldAlert } from "lucide-react";
+import { ScrollReveal } from "@/components/home/effects";
 import { AddressLookup } from "@/components/wallet/address-lookup";
 import { getDiscoveredWallets } from "@/lib/data/wallet-profile";
 import { compactAddress } from "@/lib/utils";
@@ -38,7 +39,7 @@ export default async function DiscoverPage() {
         </div>
       </div>
       {wallets.length ? (
-        <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+        <ScrollReveal className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
           {wallets.map((wallet, index) => (
             <Link
               href={`/wallet/${wallet.address}`}
@@ -81,14 +82,14 @@ export default async function DiscoverPage() {
                 </span>
                 <span className="text-right">
                   <span className="eyebrow block text-[9px]">Status</span>
-                  <b className="mt-1 flex items-center gap-1 text-[10px] text-warning">
-                    <ShieldAlert size={12} /> Unverified
-                  </b>
+                  <span className="badge badge-warning mt-1">
+                    <ShieldAlert size={11} /> Unverified
+                  </span>
                 </span>
               </div>
             </Link>
           ))}
-        </div>
+        </ScrollReveal>
       ) : (
         <div className="card py-14 text-center text-muted">
           The live explorer is temporarily quiet. Paste any address above to
