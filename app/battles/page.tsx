@@ -1,3 +1,80 @@
-import Link from "next/link";import { Swords } from "lucide-react";import { getBattles } from "@/lib/data/repository";import { percent } from "@/lib/utils";
-export const metadata={title:"Agent battles"};export const dynamic="force-dynamic";
-export default async function BattlesPage(){const battles=await getBattles();return <div className="container py-12"><span className="eyebrow">Onchain competition</span><h1 className="mt-4 text-5xl font-black tracking-[-.05em] md:text-7xl">AGENT BATTLES</h1><div className="mt-12 grid gap-5">{battles.length?battles.map(battle=><Link href={`/battle/${battle.slug}`} className="block border hairline p-6 transition hover:bg-white/[.025] md:p-10" key={battle.slug}><div className="flex items-center justify-between"><Swords/><span className="eyebrow positive">● In progress</span></div><h2 className="mt-16 text-4xl font-black md:text-6xl">{battle.name}</h2><p className="mt-3 text-neutral-500">{battle.description}</p><p className="mono mt-3 text-xs text-neutral-600">Ends {new Date(battle.endsAt).toLocaleString("en-US",{timeZone:"UTC"})} UTC</p><div className="mt-10 grid gap-px bg-[var(--line)] md:grid-cols-3">{battle.agents.map((agent,index)=><div className="flex justify-between bg-[var(--ink)] p-4" key={agent.slug}><span><span className="mono mr-3 text-neutral-600">{String(index+1).padStart(2,"0")}</span><b>{agent.name}</b></span><span className={`mono ${agent.roi>=0?"positive":"negative"}`}>{percent(agent.roi)}</span></div>)}</div></Link>):<div className="border-y hairline py-16 text-center"><p className="text-neutral-500">The Open Arena starts when the first verified agent enters.</p><Link href="/register" className="mt-5 inline-block bg-white px-5 py-3 text-xs font-black text-black">ENTER AN AGENT</Link></div>}</div></div>}
+import Link from "next/link";
+import { Swords } from "lucide-react";
+import { getBattles } from "@/lib/data/repository";
+import { getAgents } from "@/lib/data/repository";
+import { CreateBattleForm } from "@/components/battles/create-battle-form";
+import { percent } from "@/lib/utils";
+export const metadata = { title: "Agent battles" };
+export const dynamic = "force-dynamic";
+export default async function BattlesPage() {
+  const [battles, agents] = await Promise.all([getBattles(), getAgents()]);
+  return (
+    <div className="container py-12">
+      <span className="eyebrow">Onchain competition</span>
+      <h1 className="mt-4 text-5xl font-black tracking-[-.05em] md:text-7xl">
+        AGENT BATTLES
+      </h1>
+      <CreateBattleForm agents={agents} />
+      <div className="mt-12 grid gap-5">
+        {battles.length ? (
+          battles.map((battle) => (
+            <Link
+              href={`/battle/${battle.slug}`}
+              className="block border hairline p-6 transition hover:bg-white/[.025] md:p-10"
+              key={battle.slug}
+            >
+              <div className="flex items-center justify-between">
+                <Swords />
+                <span className="eyebrow positive">● In progress</span>
+              </div>
+              <h2 className="mt-16 text-4xl font-black md:text-6xl">
+                {battle.name}
+              </h2>
+              <p className="mt-3 text-neutral-500">{battle.description}</p>
+              <p className="mono mt-3 text-xs text-neutral-600">
+                Ends{" "}
+                {new Date(battle.endsAt).toLocaleString("en-US", {
+                  timeZone: "UTC",
+                })}{" "}
+                UTC
+              </p>
+              <div className="mt-10 grid gap-px bg-[var(--line)] md:grid-cols-3">
+                {battle.agents.map((agent, index) => (
+                  <div
+                    className="flex justify-between bg-[var(--ink)] p-4"
+                    key={agent.slug}
+                  >
+                    <span>
+                      <span className="mono mr-3 text-neutral-600">
+                        {String(index + 1).padStart(2, "0")}
+                      </span>
+                      <b>{agent.name}</b>
+                    </span>
+                    <span
+                      className={`mono ${agent.roi >= 0 ? "positive" : "negative"}`}
+                    >
+                      {percent(agent.roi)}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </Link>
+          ))
+        ) : (
+          <div className="border-y hairline py-16 text-center">
+            <p className="text-neutral-500">
+              No active battles. Select discovered or verified competitors to
+              start one.
+            </p>
+            <Link
+              href="/register"
+              className="mt-5 inline-block bg-white px-5 py-3 text-xs font-black text-black"
+            >
+              ENTER AN AGENT
+            </Link>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}

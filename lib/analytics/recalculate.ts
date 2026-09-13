@@ -16,7 +16,7 @@ function behaviorStats(trades:TradeRow[],portfolio:number,positions:Array<{marke
 }
 export async function recalculatePlatformAnalytics(sql:Sql){
   const results=await Promise.all([
-    sql.query("select m.*,a.created_at,min(t.traded_at) as first_trade,coalesce((select count(*) filter(where br.winner_agent_id=m.agent_id)::numeric/nullif(count(*),0)*100 from battle_results br join battle_participants bp on bp.battle_id=br.battle_id where bp.agent_id=m.agent_id),0) battle_win_rate from agent_metrics m join agents a on a.id=m.agent_id left join normalized_trades t on t.agent_id=m.agent_id where a.verified_at is not null group by m.agent_id,a.created_at"),
+    sql.query("select m.*,a.created_at,min(t.traded_at) as first_trade,coalesce((select count(*) filter(where br.winner_agent_id=m.agent_id)::numeric/nullif(count(*),0)*100 from battle_results br join battle_participants bp on bp.battle_id=br.battle_id where bp.agent_id=m.agent_id),0) battle_win_rate from agent_metrics m join agents a on a.id=m.agent_id left join normalized_trades t on t.agent_id=m.agent_id where a.verified_at is not null or a.identity_type='observed_wallet' group by m.agent_id,a.created_at"),
     sql.query("select t.id,t.agent_id,t.side,t.symbol,t.asset_address,t.quantity,t.price_usd,t.quote_amount_usd,t.realized_pnl_usd,t.traded_at,x.tx_hash from normalized_trades t join transactions x on x.id=t.transaction_id order by t.traded_at"),
     sql.query("select agent_id,market_value_usd from positions where quantity>0"),
     sql.query("select agent_id,equity_usd from portfolio_snapshots where captured_at>now()-interval '30 days' order by captured_at"),

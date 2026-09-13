@@ -33,22 +33,22 @@ const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 export class BlockscoutClient {
   constructor(private readonly baseUrl = env.BLOCKSCOUT_API_URL) {}
 
-  private async request(path: string, attempt = 0): Promise<unknown> {
+  private async request(path: string, attempt = 0, maxRetries = 4): Promise<unknown> {
     const separator = path.includes("?") ? "&" : "?";
     const key = env.BLOCKSCOUT_API_KEY ? `${separator}apikey=${encodeURIComponent(env.BLOCKSCOUT_API_KEY)}` : "";
     const response = await fetch(`${this.baseUrl}${path}${key}`, { headers: { accept: "application/json", "user-agent": "AgentArena/1.0" }, signal: AbortSignal.timeout(15_000), cache: "no-store" });
-    if ((response.status === 429 || response.status >= 500) && attempt < 4) { await wait(300 * 2 ** attempt); return this.request(path, attempt + 1); }
+    if ((response.status === 429 || response.status >= 500) && attempt < maxRetries) { await wait(300 * 2 ** attempt); return this.request(path, attempt + 1, maxRetries); }
     if (!response.ok) throw new Error(`Block explorer unavailable (${response.status})`);
     if (!(response.headers.get("content-type") ?? "").includes("application/json")) throw new Error("Block explorer returned a non-JSON challenge");
     return response.json();
   }
 
-  async getWalletTransactions(wallet: string, afterBlock = 0n, maxPages = 100, allowTruncate = false): Promise<ChainTransaction[]> {
+  async getWalletTransactions(wallet: string, afterBlock = 0n, maxPages = 100, allowTruncate = false, maxRetries = 4): Promise<ChainTransaction[]> {
     address.parse(wallet);
     let query = `/addresses/${wallet}/transactions`;
     const output: ChainTransaction[] = [];
     for (let page = 0; page < maxPages; page++) {
-      const data = transactionResponse.parse(await this.request(query));
+      const data = transactionResponse.parse(await this.request(query, 0, maxRetries));
       const mapped = data.items.map((item): ChainTransaction => ({ hash: item.hash, blockNumber: BigInt(item.block_number), timestamp: new Date(item.timestamp), status: item.status === "ok" ? "success" : "failed", method: item.method ?? null, valueWei: BigInt(item.value), from: item.from.hash, to: item.to?.hash ?? null, feeWei: BigInt(item.fee?.value ?? "0"), exchangeRateUsd: item.exchange_rate ?? null }));
       output.push(...mapped.filter((item) => item.blockNumber > afterBlock));
       if (!data.next_page_params || mapped.some((item) => item.blockNumber <= afterBlock)) return output;
@@ -59,12 +59,12 @@ export class BlockscoutClient {
     throw new Error("Wallet transaction history exceeds the safe pagination limit");
   }
 
-  async getWalletTokenTransfers(wallet: string, afterBlock = 0n, maxPages = 100, allowTruncate = false): Promise<TokenTransfer[]> {
+  async getWalletTokenTransfers(wallet: string, afterBlock = 0n, maxPages = 100, allowTruncate = false, maxRetries = 4): Promise<TokenTransfer[]> {
     address.parse(wallet);
     let query = `/addresses/${wallet}/token-transfers`;
     const output: TokenTransfer[] = [];
     for (let page = 0; page < maxPages; page++) {
-      const data = transferResponse.parse(await this.request(query));
+      const data = transferResponse.parse(await this.request(query, 0, maxRetries));
       const mapped = data.items.flatMap((item): TokenTransfer[] => {
         const decimals = Number(item.total.decimals ?? item.token.decimals ?? "0");
         if (!Number.isInteger(decimals) || decimals < 0 || decimals > 255 || item.token.type !== "ERC-20") return [];
