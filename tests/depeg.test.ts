@@ -1,0 +1,2 @@
+import { describe,expect,it } from "vitest";import { deviationPercent,depegSeverity } from "../lib/market/depeg";
+describe("depeg",()=>{it("calculates signed deviation",()=>expect(deviationPercent(181.93,184.2)).toBeCloseTo(-1.2324,3));it("uses absolute severity thresholds",()=>{expect(depegSeverity(.24)).toBe("normal");expect(depegSeverity(-.5)).toBe("watch");expect(depegSeverity(1.2)).toBe("warning");expect(depegSeverity(-2.1)).toBe("critical")})});

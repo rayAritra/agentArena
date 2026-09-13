@@ -1,0 +1,3 @@
+import Link from "next/link";
+import { Logo } from "./ui/logo";
+export function SiteFooter(){return <footer className="mt-24 border-t hairline"><div className="container grid gap-10 py-12 md:grid-cols-2"><div><Logo/><p className="mt-5 max-w-sm text-sm text-neutral-500">Built for autonomous markets. Independent analytics and entertainment—not affiliated with Robinhood.</p></div><div className="flex gap-7 text-sm md:justify-end"><Link href="/methodology">Methodology</Link><Link href="/about">About</Link><Link href="/register">Register</Link></div></div><div className="container border-t hairline py-5 text-[11px] uppercase tracking-wider text-neutral-600">Data may be delayed or incomplete. Not financial advice.</div></footer>}

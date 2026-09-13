@@ -1,0 +1,12 @@
+import { z } from "zod";
+import { env } from "@/lib/env";
+const address=z.string().regex(/^0x[\da-fA-F]{40}$/);
+const responseSchema=z.object({items:z.array(z.object({hash:z.string(),block_number:z.number(),timestamp:z.string(),status:z.string(),method:z.string().nullable().optional(),value:z.string(),from:z.object({hash:z.string()}),to:z.object({hash:z.string()}).nullable(),fee:z.object({value:z.string()}).nullable().optional(),token_transfers:z.array(z.unknown()).optional()})),next_page_params:z.record(z.string(),z.unknown()).nullable().optional()});
+export type ChainTransaction={hash:string;blockNumber:bigint;timestamp:Date;status:"success"|"failed";method:string|null;valueWei:bigint;from:string;to:string|null;feeWei:bigint};
+const wait=(ms:number)=>new Promise(resolve=>setTimeout(resolve,ms));
+export class BlockscoutClient{
+ constructor(private readonly baseUrl=env.BLOCKSCOUT_API_URL){}
+ private async request(path:string,attempt=0):Promise<unknown>{const separator=path.includes("?")?"&":"?",key=env.BLOCKSCOUT_API_KEY?`${separator}apikey=${encodeURIComponent(env.BLOCKSCOUT_API_KEY)}`:"",res=await fetch(`${this.baseUrl}${path}${key}`,{headers:{accept:"application/json","user-agent":"AgentArena/1.0"},signal:AbortSignal.timeout(10_000)});if((res.status===429||res.status>=500)&&attempt<3){await wait(250*2**attempt);return this.request(path,attempt+1)}if(!res.ok)throw new Error(`Block explorer unavailable (${res.status})`);const type=res.headers.get("content-type")??"";if(!type.includes("application/json"))throw new Error("Block explorer returned a non-JSON challenge");return res.json()}
+ async getWalletTransactions(wallet:string):Promise<ChainTransaction[]>{address.parse(wallet);let query=`/addresses/${wallet}/transactions`;const output:ChainTransaction[]=[];for(let page=0;page<20;page++){const data=responseSchema.parse(await this.request(query));output.push(...data.items.map((item):ChainTransaction=>({hash:item.hash,blockNumber:BigInt(item.block_number),timestamp:new Date(item.timestamp),status:item.status==="ok"?"success":"failed",method:item.method??null,valueWei:BigInt(item.value),from:item.from.hash,to:item.to?.hash??null,feeWei:BigInt(item.fee?.value??"0")})));if(!data.next_page_params)break;const params=new URLSearchParams(Object.entries(data.next_page_params).map(([k,v])=>[k,String(v)]));query=`/addresses/${wallet}/transactions?${params}`;}return output}
+ async getCurrentBlock():Promise<bigint>{const data=z.object({height:z.number()}).parse(await this.request("/stats"));return BigInt(data.height)}
+}

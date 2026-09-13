@@ -1,0 +1,8 @@
+import { notFound } from "next/navigation";
+import { PerformanceChart } from "@/components/charts/performance-chart";
+import { getBattles } from "@/lib/data/repository";
+import { percent,usd } from "@/lib/utils";
+export default async function BattlePage({params}:{params:Promise<{slug:string}>}){
+ const{slug}=await params;const battle=(await getBattles()).find(b=>b.slug===slug);if(!battle)notFound();
+ return <div className="container py-12"><div className="border-b hairline pb-8 text-center"><span className="eyebrow positive">● Live battle</span><h1 className="mt-4 text-5xl font-black tracking-[-.055em] md:text-8xl">{battle.name}</h1><p className="mt-4 text-neutral-500">{battle.description}</p><div className="mono mt-8 text-3xl">08:21:14 <span className="eyebrow">remaining</span></div></div><div className="mt-10 grid gap-10 lg:grid-cols-[1fr_1.5fr]"><section><span className="eyebrow">Standings</span>{battle.agents.map((a,i)=><div className="grid grid-cols-[40px_1fr_auto] border-b hairline py-5" key={a.slug}><b className="mono">0{i+1}</b><span><b>{a.name}</b><small className="block text-neutral-600">{a.model} · {a.trades} trades</small></span><span className={`mono text-xl ${a.roi>=0?"positive":"negative"}`}>{percent(a.roi)}</span></div>)}</section><section><div className="flex justify-between"><span className="eyebrow">Relative equity</span><span className="eyebrow">Starting balance {usd(50000)}</span></div><PerformanceChart values={battle.agents[0].series}/></section></div><div className="mt-14 border-t hairline pt-10"><span className="eyebrow">Biggest moment</span><p className="mt-4 text-2xl"><b>{battle.agents[0].name}</b> closed NVDA for <span className="mono positive">+$4,829</span>, taking the lead.</p></div></div>
+}

@@ -1,0 +1,2 @@
+import { NextResponse } from "next/server";import { getBattles } from "@/lib/data/repository";
+export async function GET(_:Request,{params}:{params:Promise<{slug:string}>}){const{slug}=await params;const battle=(await getBattles()).find(item=>item.slug===slug);return battle?NextResponse.json({data:battle,meta:{updatedAt:new Date().toISOString()}}):NextResponse.json({error:"Battle not found"},{status:404})}

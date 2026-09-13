@@ -1,0 +1,2 @@
+import { NextResponse } from "next/server";import { getAgents } from "@/lib/data/repository";
+export const revalidate=20;export async function GET(){try{const data=await getAgents();return NextResponse.json({data,meta:{updatedAt:new Date().toISOString(),methodology:"FIFO",source:process.env.DEMO_MODE==="false"?"Robinhood Chain":"demo"}},{headers:{"Cache-Control":"public, s-maxage=20, stale-while-revalidate=60"}})}catch{return NextResponse.json({error:"Leaderboard is temporarily unavailable"},{status:503})}}

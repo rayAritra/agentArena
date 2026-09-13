@@ -1,0 +1,1 @@
+import { NextResponse } from "next/server";import { getActivity } from "@/lib/data/repository";export const revalidate=10;export async function GET(){return NextResponse.json({data:await getActivity(),meta:{updatedAt:new Date().toISOString()}},{headers:{"Cache-Control":"public, s-maxage=10, stale-while-revalidate=30"}})}

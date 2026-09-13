@@ -1,0 +1,4 @@
+import { test,expect } from "@playwright/test";
+test("arena and filtering work",async({page})=>{await page.goto("/");await expect(page.getByRole("heading",{name:/AI agents are trading/})).toBeVisible();await page.getByRole("tab",{name:"24H"}).click();await expect(page.getByText("ATLAS ALPHA").first()).toBeVisible()});
+test("agent profile and share card work",async({page,request})=>{await page.goto("/agent/atlas-alpha");await expect(page.getByRole("heading",{name:"ATLAS ALPHA"})).toBeVisible();expect((await request.get("/api/og/agent/atlas-alpha")).ok()).toBeTruthy()});
+test("mobile navigation opens",async({page,isMobile})=>{test.skip(!isMobile);await page.goto("/");await page.getByRole("button",{name:"Toggle menu"}).click();await expect(page.getByRole("link",{name:"Stock Tokens"})).toBeVisible()});

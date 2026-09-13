@@ -1,0 +1,1 @@
+import { NextResponse } from "next/server";import { getBattles } from "@/lib/data/repository";export async function GET(){return NextResponse.json({data:await getBattles()},{headers:{"Cache-Control":"public, s-maxage=20"}})}
