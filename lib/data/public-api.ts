@@ -1,0 +1,4 @@
+import"server-only";import{getAgent,getAgents,getStockTokens,getBattles}from"@/lib/data/repository";import{getPublicWalletProfile}from"@/lib/data/wallet-profile";import{getSql}from"@/lib/neon/db";
+export async function resolveRegistered(identifier:string){const sql=getSql();if(!sql)return getAgent(identifier);const rows=await sql.query("select a.slug from agents a join agent_wallets w on w.agent_id=a.id where a.slug=$1 or lower(w.address)=lower($1) limit 1",[identifier]) as Array<{slug:string}>;return rows[0]?getAgent(rows[0].slug):null}
+export async function publicAgent(identifier:string){const registered=await resolveRegistered(identifier);if(registered)return{kind:"registered" as const,...registered};if(/^0x[0-9a-fA-F]{40}$/.test(identifier))return{kind:"observed_wallet" as const,...await getPublicWalletProfile(identifier)};return null}
+export{getAgents,getStockTokens,getBattles};

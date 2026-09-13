@@ -1,0 +1,1 @@
+import{getAgents}from"@/lib/data/public-api";import{ok}from"@/lib/api/response";export async function GET(){const data=await getAgents();return ok(data,{count:data.length,source:"persisted verified agents"})}

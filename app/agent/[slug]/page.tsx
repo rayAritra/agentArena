@@ -5,14 +5,15 @@ import { ShieldCheck } from "lucide-react";
 import { ShareActions } from "@/components/agents/share-actions";
 import { PerformanceChart } from "@/components/charts/performance-chart";
 import { getAgent } from "@/lib/data/repository";
+import { getAgentIntelligence } from "@/lib/data/intelligence";
 import { compactAddress,percent,usd } from "@/lib/utils";
 
 export const dynamic="force-dynamic";
 export async function generateMetadata({params}:{params:Promise<{slug:string}>}):Promise<Metadata>{const a=await getAgent((await params).slug);return a?{title:`${a.name} — ${percent(a.roi)} ROI`,description:a.description,openGraph:{images:[`/api/og/agent/${a.slug}`]}}:{title:"Agent not found"}}
 
 export default async function AgentPage({params}:{params:Promise<{slug:string}>}){
-  const a=await getAgent((await params).slug);if(!a)notFound();
-  const metrics=[["Portfolio value",usd(a.portfolio)],["Total P&L",usd(a.pnl)],["Total ROI",percent(a.roi)],["24H P&L",usd(a.day)],["Win rate",`${a.winRate.toFixed(1)}%`],["Trades",String(a.trades)],["Volume",usd(a.volume,true)],["Best trade",usd(a.bestTrade)]];
+  const a=await getAgent((await params).slug);if(!a)notFound();const intelligence=await getAgentIntelligence(a.slug);const score=intelligence?.score as Record<string,unknown>|null,dna=intelligence?.dna as Record<string,unknown>|null;
+  const metrics=[["Arena Score",score?String(score.arena_score):"—"],["Agent DNA",dna?String(dna.primary_archetype):"Pending"],["Portfolio value",usd(a.portfolio)],["Total P&L",usd(a.pnl)],["Total ROI",percent(a.roi)],["Win rate",`${a.winRate.toFixed(1)}%`],["Trades",String(a.trades)],["Volume",usd(a.volume,true)]];
   return <div className="container py-12"><div className="grid gap-10 border-b hairline pb-10 lg:grid-cols-[1fr_auto] lg:items-end"><div><span className="eyebrow">Verified autonomous trader</span><h1 className="mt-4 flex items-center gap-3 text-4xl font-black tracking-[-.05em] sm:text-6xl">{a.name}<ShieldCheck className="text-neutral-500"/></h1><p className="mono mt-4 text-xs text-neutral-500">{compactAddress(a.wallet)} · {a.model} · {a.strategy}</p><p className="mt-6 max-w-2xl text-neutral-400">{a.description}</p></div><ShareActions name={a.name} rank={a.rank} roi={percent(a.roi)} path={`/agent/${a.slug}`}/></div>
     <div className="grid grid-cols-2 border-b hairline md:grid-cols-4 xl:grid-cols-8">{metrics.map(([label,value])=><div className="border-r hairline py-5 pr-3" key={label}><span className="eyebrow block text-[9px]">{label}</span><strong className={`mono mt-2 block text-lg ${label.includes("P&L")||label.includes("ROI")?(String(value).startsWith("-")?"negative":"positive"):""}`}>{value}</strong></div>)}</div>
     <div className="mt-12 grid gap-10 lg:grid-cols-[2fr_1fr]"><section><div className="flex justify-between"><span className="eyebrow">Portfolio value · all indexed history</span><span className="eyebrow">Block {a.lastSyncedBlock??"pending first sync"}</span></div><PerformanceChart values={a.series} negative={a.pnl<0}/></section><aside className="border-l hairline pl-6"><span className="eyebrow">Risk &amp; execution</span>{[["Profit factor",a.profitFactor.toFixed(2)],["Max drawdown",percent(a.maxDrawdown)],["Average win",usd(a.averageWin)],["Average loss",usd(a.averageLoss)],["Realized P&L",usd(a.realizedPnl)],["Unrealized P&L",usd(a.unrealizedPnl)]].map(([label,value])=><div className="flex justify-between border-b hairline py-4 text-sm" key={label}><span className="text-neutral-500">{label}</span><span className="mono">{value}</span></div>)}</aside></div>
