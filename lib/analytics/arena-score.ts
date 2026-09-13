@@ -1,0 +1,11 @@
+export const ARENA_SCORE_VERSION = "v1.0.0";
+export type ScoreInput={id:string;roi:number;realizedPnl:number;winRate:number;maxDrawdown:number;consistency:number;tradeCount:number;observedDays:number;battleWinRate:number};
+export type ScoreResult={agentId:string;arenaScore:number;eligible:boolean;sampleSize:number;components:{return:number;pnl:number;risk:number;winRate:number;consistency:number;activity:number;longevity:number;battle:number}};
+const clamp=(n:number,min=0,max=100)=>Math.min(max,Math.max(min,Number.isFinite(n)?n:0));
+function percentiles(values:number[],higher=true){const sorted=[...values].sort((a,b)=>a-b);return values.map(value=>{if(sorted.length<=1)return 50;const below=sorted.filter(item=>item<value).length;const equal=sorted.filter(item=>item===value).length;const p=(below+(equal-1)/2)/(sorted.length-1)*100;return clamp(higher?p:100-p)})}
+export function calculateArenaScores(inputs:ScoreInput[]):ScoreResult[]{
+  if(!inputs.length)return[];
+  const eligible=inputs.filter(item=>item.tradeCount>=5&&item.observedDays>=1),eligibleIds=new Set(eligible.map(item=>item.id)),cohort=eligible.length?eligible:inputs;
+  const metrics={ret:percentiles(cohort.map(x=>x.roi)),pnl:percentiles(cohort.map(x=>x.realizedPnl)),risk:percentiles(cohort.map(x=>Math.abs(x.maxDrawdown)),false),win:percentiles(cohort.map(x=>x.winRate)),consistency:percentiles(cohort.map(x=>x.consistency)),activity:percentiles(cohort.map(x=>Math.log1p(x.tradeCount))),longevity:percentiles(cohort.map(x=>x.observedDays)),battle:percentiles(cohort.map(x=>x.battleWinRate))};
+  return inputs.map(item=>{const i=cohort.findIndex(x=>x.id===item.id),ok=eligibleIds.has(item.id);const c={return:ok?metrics.ret[i]:0,pnl:ok?metrics.pnl[i]:0,risk:ok?metrics.risk[i]:0,winRate:ok?metrics.win[i]:0,consistency:ok?metrics.consistency[i]:0,activity:ok?metrics.activity[i]:0,longevity:ok?metrics.longevity[i]:0,battle:ok?metrics.battle[i]:0};const total=c.return*.30+c.pnl*.20+c.winRate*.15+c.risk*.10+c.consistency*.10+c.activity*.05+c.longevity*.05+c.battle*.05;return{agentId:item.id,arenaScore:clamp(Math.round(total*10),0,1000),eligible:ok,sampleSize:item.tradeCount,components:c}}).sort((a,b)=>b.arenaScore-a.arenaScore);
+}

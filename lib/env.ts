@@ -12,6 +12,7 @@ const schema = z.object({
   BLOCKSCOUT_API_URL: z.string().url().default("https://robinhoodchain.blockscout.com/api/v2"),
   BLOCKSCOUT_API_KEY: optionalString,
   CRON_SECRET: optionalSecret(16),
+  WEBHOOK_ENCRYPTION_KEY: optionalSecret(32),
   DEMO_MODE: z.enum(["true","false"]).default("true")
 });
 export const env = schema.parse(process.env);

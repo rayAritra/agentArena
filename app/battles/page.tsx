@@ -1,3 +1,45 @@
-import Link from "next/link";import { Swords } from "lucide-react";import { ScrollReveal } from "@/components/home/effects";import { DataRow } from "@/components/ui/data-row";import { getBattles } from "@/lib/data/repository";import { percent } from "@/lib/utils";
-export const metadata={title:"Agent battles"};export const dynamic="force-dynamic";
-export default async function BattlesPage(){const battles=await getBattles();return <div className="container py-12"><span className="eyebrow">Onchain competition</span><h1 className="mt-4 text-5xl font-black tracking-[-.03em] md:text-6xl">Agent battles</h1><ScrollReveal className="mt-12 grid gap-5">{battles.length?battles.map(battle=><Link href={`/battle/${battle.slug}`} className="card card-hover block p-6 md:p-10" key={battle.slug}><div className="flex items-center justify-between"><Swords className="text-brand"/><span className="badge badge-positive badge-dot badge-live">In progress</span></div><h2 className="mt-16 text-4xl font-black tracking-[-.02em] md:text-5xl">{battle.name}</h2><p className="mt-3 text-muted">{battle.description}</p><p className="mono mt-3 text-xs text-muted">Ends {new Date(battle.endsAt).toLocaleString("en-US",{timeZone:"UTC"})} UTC</p><div className="mt-10 grid gap-3 md:grid-cols-3">{battle.agents.map((agent,index)=><DataRow key={agent.slug} icon={String(index+1).padStart(2,"0")} title={agent.name} trailing={<span className={agent.roi>=0?"positive":"negative"}>{percent(agent.roi)}</span>}/>)}</div></Link>):<div className="card py-16 text-center"><p className="text-muted">The Open Arena starts when the first verified agent enters.</p><Link href="/register" className="btn btn-primary mt-5 inline-flex">Enter an agent</Link></div>}</ScrollReveal></div>}
+import Link from "next/link";
+import { Swords } from "lucide-react";
+import { CreateBattleForm } from "@/components/battles/create-battle-form";
+import { ScrollReveal } from "@/components/home/effects";
+import { DataRow } from "@/components/ui/data-row";
+import { getAgents, getBattles } from "@/lib/data/repository";
+import { percent } from "@/lib/utils";
+
+export const metadata = { title: "Agent battles" };
+export const dynamic = "force-dynamic";
+
+export default async function BattlesPage() {
+  const [battles, agents] = await Promise.all([getBattles(), getAgents()]);
+  return (
+    <div className="container py-12">
+      <span className="eyebrow">Onchain competition</span>
+      <h1 className="mt-4 text-5xl font-black tracking-[-.03em] md:text-6xl">Agent battles</h1>
+      <CreateBattleForm agents={agents} />
+      <ScrollReveal className="mt-12 grid gap-5">
+        {battles.length ? (
+          battles.map((battle) => (
+            <Link href={`/battle/${battle.slug}`} className="card card-hover block p-6 md:p-10" key={battle.slug}>
+              <div className="flex items-center justify-between">
+                <Swords className="text-brand" />
+                <span className="badge badge-positive badge-dot badge-live">In progress</span>
+              </div>
+              <h2 className="mt-16 text-4xl font-black tracking-[-.02em] md:text-5xl">{battle.name}</h2>
+              <p className="mt-3 text-muted">{battle.description}</p>
+              <p className="mono mt-3 text-xs text-muted">Ends {new Date(battle.endsAt).toLocaleString("en-US", { timeZone: "UTC" })} UTC</p>
+              <div className="mt-10 grid gap-3 md:grid-cols-3">
+                {battle.agents.map((agent, index) => (
+                  <DataRow key={agent.slug} icon={String(index + 1).padStart(2, "0")} title={agent.name} trailing={<span className={agent.roi >= 0 ? "positive" : "negative"}>{percent(agent.roi)}</span>} />
+                ))}
+              </div>
+            </Link>
+          ))
+        ) : (
+          <div className="card py-16 text-center">
+            <p className="text-muted">No active battles. Select discovered or verified competitors above to start one.</p>
+          </div>
+        )}
+      </ScrollReveal>
+    </div>
+  );
+}

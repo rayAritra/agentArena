@@ -10,9 +10,9 @@ export async function GET(request: Request) {
   if (!sql) return NextResponse.json({ data: walletEntry });
   const like = `%${query}%`;
   const [agents, tokens, battles] = await Promise.all([
-    sql.query("select name as label,'Agent · '||strategy||' · '||w.address as meta,'/agent/'||slug as href from agents a join agent_wallets w on w.agent_id=a.id where a.verified_at is not null and (a.name ilike $1 or a.strategy ilike $1 or w.address ilike $1) order by a.name limit 5", [like]),
-    sql.query("select symbol as label,'Canonical Stock Token' as meta,'/stock-tokens?symbol='||symbol as href from stock_tokens where active=true and symbol ilike $1 order by symbol limit 5", [like]),
-    sql.query("select name as label,'Battle' as meta,'/battle/'||slug as href from battles where ends_at>now() and name ilike $1 order by starts_at desc limit 5", [like]),
+    sql.query("select name as label,'Agent · '||strategy||' · '||w.address as meta,case when a.identity_type='observed_wallet' then '/wallet/'||w.address else '/agent/'||slug end as href from agents a join agent_wallets w on w.agent_id=a.id where (a.verified_at is not null or a.identity_type='observed_wallet') and (a.name ilike $1 or a.strategy ilike $1 or w.address ilike $1) order by a.name limit 5", [like]),
+    sql.query("select symbol as label,'Canonical Stock Token' as meta,'/markets/'||symbol as href from stock_tokens where active=true and (symbol ilike $1 or reference_symbol ilike $1) order by symbol limit 5", [like]),
+    sql.query("select name as label,'Battle · '||status as meta,'/battle/'||slug as href from battles where name ilike $1 or slug ilike $1 or id::text ilike $1 order by starts_at desc limit 5", [like]),
   ]);
   return NextResponse.json({ data: [...walletEntry, ...agents, ...tokens, ...battles].slice(0, 10) }, { headers: { "Cache-Control": "no-store" } });
 }

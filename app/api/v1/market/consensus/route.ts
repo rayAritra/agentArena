@@ -1,0 +1,1 @@
+import{getMarketConsensus}from"@/lib/data/markets";import{ok}from"@/lib/api/response";export async function GET(){return ok(await getMarketConsensus(),{window:"24h",disclaimer:"Observed onchain activity. Not investment advice."})}
