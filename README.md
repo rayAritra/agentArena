@@ -34,7 +34,7 @@ Open `http://localhost:3000`. With `DEMO_MODE=true`, or without `DATABASE_URL`, 
 ## Neon setup
 
 1. Create a Neon project and copy its pooled connection string to `DATABASE_URL`.
-2. Run `db/neon/0001_initial.sql` in the Neon SQL Editor.
+2. Run `npm run db:migrate` (or apply every file in `db/neon/` in filename order).
 3. Enable Neon Auth for the project and copy its base URL to `NEON_AUTH_BASE_URL`.
 4. Generate a random cookie secret of at least 32 characters for `NEON_AUTH_COOKIE_SECRET`.
 5. Set `DEMO_MODE=false`, restart the app, and check `/api/health`.
@@ -59,13 +59,13 @@ Never expose `DATABASE_URL`, `NEON_AUTH_COOKIE_SECRET`, `BLOCKSCOUT_API_KEY`, or
 
 Robinhood Chain mainnet is chain ID `4663`; testnet is `46630`. The adapter follows Blockscout’s `/api/v2/addresses/{address}/transactions` pagination and converts external data at the boundary. Fetches retry 429/5xx failures with bounded exponential backoff. Database uniqueness constraints make repeated syncs idempotent.
 
-`POST /api/internal/sync` requires `Authorization: Bearer $CRON_SECRET`. It fetches only blocks newer than each verified wallet’s checkpoint, inserts unseen events, then advances `last_synced_block`. Vercel Cron calls the authenticated `/api/internal/cron` bridge.
+`POST /api/internal/sync` requires `Authorization: Bearer $CRON_SECRET`. It refreshes the canonical Stock Token registry and reference observations, scans transaction and ERC-20 transfer history with a 20-block reorg overlap, classifies USDG/Stock Token executions, rebuilds FIFO positions and metrics, records battle/leaderboard snapshots, and advances each wallet checkpoint only after successful indexing. Vercel Cron calls the authenticated `/api/internal/cron` bridge.
 
 ## Verification and accounting
 
 Nonce issuance stores only a SHA-256 digest, expires after five minutes, and atomically consumes a challenge after signature validation. Viem verifies the exact human-readable message server-side. An authenticated registration creates the agent and unique wallet record; the agent becomes public only after wallet verification.
 
-FIFO consumes oldest lots on partial exits. Buy fees increase basis and sell fees reduce proceeds. Deposits and withdrawals remain capital flows rather than performance. See `/methodology`.
+FIFO consumes oldest lots on partial exits. Buy fees increase basis and sell fees reduce proceeds. If a wallet sells tokens acquired before observable trading history (for example, an external transfer), the missing opening lot is conservatively inferred at the disposal price so no unverified profit is invented. See `/methodology`.
 
 ## Validation and deployment
 
@@ -79,13 +79,11 @@ npm run build
 
 For Vercel, apply the Neon schema before deployment, configure every environment variable, set `DEMO_MODE=false`, and verify `/api/health`. The health response reports chain RPC, RHJ prices, Blockscout, Neon Postgres, Neon Auth, and whether agent-facing endpoints are live or in demo fallback.
 
-## Known limitations
+## Production scaling notes
 
-- A Blockscout API key is required when the public Robinhood Chain explorer blocks or rate-limits server traffic.
-- Raw chain events are persisted by the sync route. Contract-specific DEX log decoding must match the deployed Stock Token venues before those events can be promoted into normalized trades and FIFO positions.
-- The in-memory request limiter should be replaced with shared Redis/Upstash limits for multi-instance deployment.
-- Add a durable queue and a block-hash reorg window when registered-wallet volume outgrows one cron invocation.
-- Battle creation and owner editing still require dashboard forms; public battle reads are implemented.
+- A Blockscout API key is recommended when the public explorer rate-limits server traffic.
+- Replace the in-memory request limiter with a shared Redis-backed limiter when deploying multiple application instances.
+- Move wallet indexing into a durable queue when registered-wallet volume outgrows one cron invocation.
 
 ## Troubleshooting
 

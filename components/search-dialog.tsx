@@ -1,3 +1,64 @@
-"use client";import Link from "next/link";import { AnimatePresence,motion } from "framer-motion";import { Search,X } from "lucide-react";import { useEffect,useMemo,useState } from "react";import { agents,battles,stockTokens } from "@/lib/demo/data";
-const entries=[...agents.map(a=>({label:a.name,meta:`Agent · ${a.strategy} · ${a.wallet}`,href:`/agent/${a.slug}`})),...stockTokens.map(t=>({label:t.symbol,meta:"Stock Token",href:"/stock-tokens"})),...battles.map(b=>({label:b.name,meta:"Battle",href:`/battle/${b.slug}`}))];
-export function SearchDialog(){const[open,setOpen]=useState(false),[query,setQuery]=useState("");useEffect(()=>{const key=(e:KeyboardEvent)=>{if(e.key==="/"&&!/input|textarea/i.test((e.target as HTMLElement).tagName)){e.preventDefault();setOpen(true)}if(e.key==="Escape")setOpen(false)};window.addEventListener("keydown",key);return()=>window.removeEventListener("keydown",key)},[]);const results=useMemo(()=>entries.filter(e=>`${e.label} ${e.meta}`.toLowerCase().includes(query.toLowerCase())).slice(0,8),[query]);return <><button onClick={()=>setOpen(true)} aria-label="Open search" className="focus-ring grid size-9 place-items-center border hairline hover:bg-white/5"><Search size={15}/></button><AnimatePresence>{open&&<motion.div className="fixed inset-0 z-[100] bg-black/80 p-4 pt-[12vh] backdrop-blur-sm" initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} onMouseDown={()=>setOpen(false)}><motion.div role="dialog" aria-modal="true" aria-label="Global search" onMouseDown={e=>e.stopPropagation()} initial={{opacity:0,y:-12,scale:.98}} animate={{opacity:1,y:0,scale:1}} exit={{opacity:0,y:-8}} className="mx-auto max-w-2xl border hairline bg-[var(--panel)] shadow-2xl"><div className="flex items-center gap-3 border-b hairline p-4"><Search size={17}/><input autoFocus value={query} onChange={e=>setQuery(e.target.value)} placeholder="Search agents, wallets, Stock Tokens, battles…" className="w-full bg-transparent text-sm outline-none"/><button onClick={()=>setOpen(false)} aria-label="Close search"><X size={17}/></button></div><div className="p-2">{results.map((e,i)=><Link onClick={()=>setOpen(false)} href={e.href} className="flex items-center justify-between p-4 transition hover:bg-white/5" key={`${e.href}-${e.label}`}><span><b className="block">{e.label}</b><small className="mono text-neutral-600">{e.meta}</small></span><span className="mono text-xs text-neutral-700">0{i+1}</span></Link>)}{!results.length&&<p className="p-8 text-center text-sm text-neutral-500">NO RESULTS IN THE ARENA.</p>}</div><div className="border-t hairline p-3 text-[10px] uppercase tracking-widest text-neutral-600">↑↓ Navigate · Enter Open · Esc Close</div></motion.div></motion.div>}</AnimatePresence></>}
+"use client";
+
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { AnimatePresence, motion } from "framer-motion";
+import { Search, X } from "lucide-react";
+import { useEffect, useState, type KeyboardEvent as ReactKeyboardEvent } from "react";
+
+type Entry = { label: string; meta: string; href: string };
+
+export function SearchDialog() {
+  const router = useRouter();
+  const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const [results, setResults] = useState<Entry[]>([]);
+  const [active, setActive] = useState(0);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const key = (event: KeyboardEvent) => {
+      if (event.key === "/" && !/input|textarea/i.test((event.target as HTMLElement).tagName)) { event.preventDefault(); setOpen(true); }
+      if (event.key === "Escape") setOpen(false);
+    };
+    window.addEventListener("keydown", key);
+    return () => window.removeEventListener("keydown", key);
+  }, []);
+
+  useEffect(() => {
+    if (!open || !query.trim()) return;
+    const controller = new AbortController();
+    const timer = setTimeout(async () => {
+      setLoading(true);
+      try {
+        const response = await fetch(`/api/search?q=${encodeURIComponent(query)}`, { signal: controller.signal });
+        const body = await response.json() as { data?: Entry[] };
+        setResults(body.data ?? []); setActive(0);
+      } catch (error) {
+        if ((error as Error).name !== "AbortError") setResults([]);
+      } finally { setLoading(false); }
+    }, 180);
+    return () => { clearTimeout(timer); controller.abort(); };
+  }, [open, query]);
+
+  function keys(event: ReactKeyboardEvent<HTMLInputElement>) {
+    if (event.key === "ArrowDown") { event.preventDefault(); setActive((value) => Math.min(value + 1, results.length - 1)); }
+    if (event.key === "ArrowUp") { event.preventDefault(); setActive((value) => Math.max(value - 1, 0)); }
+    if (event.key === "Enter" && results[active]) { event.preventDefault(); setOpen(false); router.push(results[active].href); }
+  }
+
+  return <>
+    <button onClick={() => setOpen(true)} aria-label="Open search" className="focus-ring grid size-9 place-items-center border hairline hover:bg-white/5"><Search size={15} /></button>
+    <AnimatePresence>{open && <motion.div className="fixed inset-0 z-[100] bg-black/80 p-4 pt-[12vh] backdrop-blur-sm" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onMouseDown={() => setOpen(false)}>
+      <motion.div role="dialog" aria-modal="true" aria-label="Global search" onMouseDown={(event) => event.stopPropagation()} initial={{ opacity: 0, y: -12, scale: .98 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: -8 }} className="mx-auto max-w-2xl border hairline bg-[var(--panel)] shadow-2xl">
+        <div className="flex items-center gap-3 border-b hairline p-4"><Search size={17} /><input autoFocus value={query} onKeyDown={keys} onChange={(event) => { setQuery(event.target.value); if (!event.target.value.trim()) setResults([]); }} placeholder="Search agents, wallets, Stock Tokens, battles…" className="w-full bg-transparent text-sm outline-none" /><button onClick={() => setOpen(false)} aria-label="Close search"><X size={17} /></button></div>
+        <div className="p-2">{query && results.map((entry, index) => <Link onMouseEnter={() => setActive(index)} onClick={() => setOpen(false)} href={entry.href} className={`flex items-center justify-between p-4 transition ${active === index ? "bg-white/5" : ""}`} key={`${entry.href}-${entry.label}`}><span><b className="block">{entry.label}</b><small className="mono text-neutral-600">{entry.meta}</small></span><span className="mono text-xs text-neutral-700">{String(index + 1).padStart(2, "0")}</span></Link>)}
+          {loading && query && <p className="p-8 text-center text-sm text-neutral-500">SEARCHING LIVE INDEX…</p>}
+          {!loading && query && !results.length && <p className="p-8 text-center text-sm text-neutral-500">NO RESULTS IN THE ARENA.</p>}
+          {!query && <p className="p-8 text-center text-sm text-neutral-500">TYPE A NAME, WALLET, TICKER, OR BATTLE.</p>}
+        </div>
+        <div className="border-t hairline p-3 text-[10px] uppercase tracking-widest text-neutral-600">↑↓ Navigate · Enter Open · Esc Close</div>
+      </motion.div>
+    </motion.div>}</AnimatePresence>
+  </>;
+}

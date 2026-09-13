@@ -3,6 +3,7 @@ import { getCurrentUser } from "@/lib/auth/server";
 import { getAgents } from "@/lib/data/repository";
 import { getSql } from "@/lib/neon/db";
 import { rateLimit, requestKey } from "@/lib/security/rate-limit";
+import { hasTrustedOrigin } from "@/lib/security/origin";
 import { agentRegistrationSchema } from "@/lib/validation/agent";
 
 export async function GET() {
@@ -10,9 +11,12 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+  if (!hasTrustedOrigin(request)) return NextResponse.json({ error: "Untrusted request origin" }, { status: 403 });
   if (!rateLimit(`register:${requestKey(request)}`, 3, 3_600_000).allowed) return NextResponse.json({ error: "Registration limit reached" }, { status: 429 });
+  let attemptedWallet: string | null = null;
   try {
     const input = agentRegistrationSchema.parse(await request.json());
+    attemptedWallet = input.wallet;
     const sql = getSql();
     if (!sql) return NextResponse.json({ error: "Registration persistence requires Neon. Demo mode remains read-only." }, { status: 503 });
     const user = await getCurrentUser();
@@ -34,6 +38,14 @@ export async function POST(request: Request) {
     return NextResponse.json({ data: rows[0] }, { status: 201 });
   } catch (error) {
     const code = (error as { code?: string }).code;
+    if (code === "23505") {
+      const sql = getSql();
+      const user = await getCurrentUser();
+      if (sql && user && attemptedWallet) {
+        const existing = await sql.query("select a.id,a.slug,a.name,a.verified_at from agents a join agent_wallets w on w.agent_id=a.id where a.owner_id=$1 and w.address=$2 limit 1", [user.id, attemptedWallet]) as Array<{ id: string; slug: string; name: string; verified_at: string | null }>;
+        if (existing[0]) return NextResponse.json({ data: existing[0], resumed: true });
+      }
+    }
     return NextResponse.json({ error: code === "23505" ? "Agent name or wallet already exists" : error instanceof Error ? error.message : "Invalid registration" }, { status: code === "23505" ? 409 : 400 });
   }
 }

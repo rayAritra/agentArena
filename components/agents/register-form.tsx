@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
+import { useRouter } from "next/navigation";
 import { LogIn, UserPlus, Wallet } from "lucide-react";
 import { authClient } from "@/lib/auth/client";
 
@@ -9,6 +10,7 @@ type EthereumProvider = { request(args: { method: string; params?: unknown[] }):
 declare global { interface Window { ethereum?: EthereumProvider } }
 
 export function RegisterForm() {
+  const router = useRouter();
   const [status, setStatus] = useState("");
   const [wallet, setWallet] = useState("");
 
@@ -19,14 +21,24 @@ export function RegisterForm() {
     const password = String(form.get("password"));
     const intent = ((event.nativeEvent as SubmitEvent).submitter as HTMLButtonElement | null)?.value;
     setStatus(intent === "signup" ? "Creating your secure owner account…" : "Signing in…");
-    const result = intent === "signup"
-      ? await authClient.signUp.email({ email, password, name: email.split("@")[0] || "Agent owner" })
-      : await authClient.signIn.email({ email, password });
-    setStatus(result.error ? result.error.message ?? "Authentication failed" : intent === "signup" ? "Account created. You can now register your agent." : "Signed in. You can now register your agent.");
+    try {
+      const result = intent === "signup"
+        ? await authClient.signUp.email({ email, password, name: email.split("@")[0] || "Agent owner" })
+        : await authClient.signIn.email({ email, password });
+      setStatus(result.error ? result.error.message ?? "Authentication failed" : intent === "signup" ? "Account created. You can now register your agent." : "Signed in. You can now register your agent.");
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : "Authentication failed");
+    }
   }
 
   async function connect() {
     if (!window.ethereum) { setStatus("Install an EVM-compatible browser wallet."); return; }
+    try {
+      await window.ethereum.request({ method: "wallet_switchEthereumChain", params: [{ chainId: "0x1237" }] });
+    } catch (error) {
+      if ((error as { code?: number }).code !== 4902) { setStatus("Switch your wallet to Robinhood Chain (4663)."); return; }
+      await window.ethereum.request({ method: "wallet_addEthereumChain", params: [{ chainId: "0x1237", chainName: "Robinhood Chain", nativeCurrency: { name: "Ether", symbol: "ETH", decimals: 18 }, rpcUrls: ["https://rpc.mainnet.chain.robinhood.com"], blockExplorerUrls: ["https://robinhoodchain.blockscout.com"] }] });
+    }
     const accounts = await window.ethereum.request({ method: "eth_requestAccounts" }) as string[];
     setWallet(accounts[0]?.toLowerCase() ?? "");
     setStatus(accounts[0] ? "Wallet connected. No transaction was initiated." : "No wallet selected.");
@@ -50,7 +62,8 @@ export function RegisterForm() {
       const signature = await window.ethereum!.request({ method: "personal_sign", params: [challenge.message, wallet] }) as string;
       const confirmation = await fetch("/api/agents/verification/confirm", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ agentId: registrationData.data.id, address: wallet, nonceId: challenge.id, message: challenge.message, signature }) });
       const result = await confirmation.json() as { error?: string };
-      setStatus(confirmation.ok ? "Verified. Your agent is now eligible for the live arena." : result.error ?? "Verification failed");
+      setStatus(confirmation.ok ? "Verified. Opening your dashboard…" : result.error ?? "Verification failed");
+      if (confirmation.ok) { router.push("/dashboard"); router.refresh(); }
     } catch { setStatus("Signature request was rejected. You can retry verification later."); }
   }
 
@@ -69,8 +82,8 @@ export function RegisterForm() {
       <Field name="name" label="Agent name" />
       <label><span className="eyebrow">Description</span><textarea name="description" required minLength={20} className="mt-2 min-h-28 w-full border hairline bg-transparent p-4 outline-none focus:border-white" /></label>
       <div className="grid gap-5 sm:grid-cols-2"><label><span className="eyebrow">Strategy</span><select name="strategy" className="mt-2 w-full border hairline bg-[var(--ink)] p-4">{strategies.map((strategy) => <option key={strategy}>{strategy}</option>)}</select></label><Field name="model" label="AI model" /></div>
-      <div className="grid gap-5 sm:grid-cols-2"><Field name="website" label="Website (optional)" type="url" /><Field name="xAccount" label="X account (optional)" /></div>
-      <Field name="startingCapital" label="Starting capital (USD)" />
+      <div className="grid gap-5 sm:grid-cols-3"><Field name="website" label="Website (optional)" type="url" /><Field name="xAccount" label="X account (optional)" /><Field name="github" label="GitHub (optional)" type="url" /></div>
+      <Field name="startingCapital" label="Starting capital (USD)" type="number" />
       <button className="focus-ring mt-3 flex items-center justify-center gap-2 bg-[var(--paper)] p-4 text-xs font-black text-black"><Wallet size={15} /> REGISTER &amp; VERIFY WALLET</button>
       <p className="min-h-5 text-center text-xs text-neutral-500" role="status">{status}</p>
     </form>
