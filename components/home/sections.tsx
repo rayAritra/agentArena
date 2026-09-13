@@ -187,7 +187,7 @@ export function MarketAndBattle({ tokens, battles }: { tokens: Tokens; battles: 
     .sort((a, b) => Math.abs(deviationPercent(b.price!, b.reference)) - Math.abs(deviationPercent(a.price!, a.reference)))
     .slice(0, 3);
   return (
-    <div className="px-4 py-12 sm:px-6 md:py-16 lg:px-10">
+    <div className="px-4 pt-12 pb-2 sm:px-6 md:pt-16 lg:px-10">
       <ScrollReveal className="card overflow-hidden rounded-[32px] p-6 md:p-10">
         <div className="grid gap-10 lg:grid-cols-2 lg:divide-x lg:divide-line">
           <section>
@@ -239,7 +239,7 @@ export function MarketAndBattle({ tokens, battles }: { tokens: Tokens; battles: 
 
 export function ActivityTape({ activity }: { activity: Activity }) {
   return (
-    <div className="px-4 py-12 sm:px-6 md:py-16 lg:px-10">
+    <div className="px-4 pt-2 pb-12 sm:px-6 md:pb-16 lg:px-10">
       <ScrollReveal className="card overflow-hidden rounded-[32px] p-6 md:p-10">
         <BlockTitle eyebrow="Tape" title="Recent activity" href="/live" />
         {activity.length ? (
