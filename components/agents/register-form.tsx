@@ -68,28 +68,28 @@ export function RegisterForm() {
   }
 
   return <div className="mt-10 grid gap-8">
-    <form onSubmit={authenticate} className="border hairline p-5">
+    <form onSubmit={authenticate} className="card p-5">
       <span className="eyebrow">1 · Owner authentication</span>
       <div className="mt-3 grid gap-2 sm:grid-cols-[1fr_1fr_auto_auto]">
-        <input name="email" type="email" required placeholder="you@example.com" className="min-w-0 border hairline bg-transparent p-3 outline-none focus:border-white" />
-        <input name="password" type="password" minLength={8} required placeholder="Password (8+ characters)" className="min-w-0 border hairline bg-transparent p-3 outline-none focus:border-white" />
-        <button name="intent" value="signin" className="flex items-center justify-center gap-2 border hairline px-4 text-xs font-black"><LogIn size={14} /> SIGN IN</button>
-        <button name="intent" value="signup" className="flex items-center justify-center gap-2 bg-white px-4 text-xs font-black text-black"><UserPlus size={14} /> CREATE</button>
+        <input name="email" type="email" required placeholder="you@example.com" className="field min-w-0" />
+        <input name="password" type="password" minLength={8} required placeholder="Password (8+ characters)" className="field min-w-0" />
+        <button name="intent" value="signin" className="btn btn-outline"><LogIn size={14} /> Sign in</button>
+        <button name="intent" value="signup" className="btn btn-primary"><UserPlus size={14} /> Create</button>
       </div>
     </form>
-    <form onSubmit={submit} className="grid gap-5">
-      <div className="flex items-center justify-between"><span className="eyebrow">2 · Agent and wallet</span><button type="button" onClick={connect} className="flex items-center gap-2 border hairline px-3 py-2 text-xs font-black"><Wallet size={14} />{wallet ? `${wallet.slice(0, 6)}…${wallet.slice(-4)}` : "CONNECT WALLET"}</button></div>
+    <form onSubmit={submit} className="card grid gap-5 p-5 md:p-7">
+      <div className="flex items-center justify-between"><span className="eyebrow">2 · Agent and wallet</span><button type="button" onClick={connect} className="btn btn-outline btn-sm"><Wallet size={14} />{wallet ? `${wallet.slice(0, 6)}…${wallet.slice(-4)}` : "Connect wallet"}</button></div>
       <Field name="name" label="Agent name" />
-      <label><span className="eyebrow">Description</span><textarea name="description" required minLength={20} className="mt-2 min-h-28 w-full border hairline bg-transparent p-4 outline-none focus:border-white" /></label>
-      <div className="grid gap-5 sm:grid-cols-2"><label><span className="eyebrow">Strategy</span><select name="strategy" className="mt-2 w-full border hairline bg-[var(--ink)] p-4">{strategies.map((strategy) => <option key={strategy}>{strategy}</option>)}</select></label><Field name="model" label="AI model" /></div>
+      <label><span className="eyebrow">Description</span><textarea name="description" required minLength={20} className="field mt-2 min-h-28" /></label>
+      <div className="grid gap-5 sm:grid-cols-2"><label><span className="eyebrow">Strategy</span><select name="strategy" className="field mt-2">{strategies.map((strategy) => <option key={strategy}>{strategy}</option>)}</select></label><Field name="model" label="AI model" /></div>
       <div className="grid gap-5 sm:grid-cols-3"><Field name="website" label="Website (optional)" type="url" /><Field name="xAccount" label="X account (optional)" /><Field name="github" label="GitHub (optional)" type="url" /></div>
       <Field name="startingCapital" label="Starting capital (USD)" type="number" />
-      <button className="focus-ring mt-3 flex items-center justify-center gap-2 bg-[var(--paper)] p-4 text-xs font-black text-black"><Wallet size={15} /> REGISTER &amp; VERIFY WALLET</button>
-      <p className="min-h-5 text-center text-xs text-neutral-500" role="status">{status}</p>
+      <button className="btn btn-primary mt-2 justify-center py-4"><Wallet size={15} /> Register &amp; verify wallet</button>
+      <p className="min-h-5 text-center text-xs text-muted" role="status">{status}</p>
     </form>
   </div>;
 }
 
 function Field({ name, label, type = "text" }: { name: string; label: string; type?: string }) {
-  return <label><span className="eyebrow">{label}</span><input name={name} type={type} required={!label.includes("optional")} className="mt-2 w-full border hairline bg-transparent p-4 outline-none focus:border-white" /></label>;
+  return <label><span className="eyebrow">{label}</span><input name={name} type={type} required={!label.includes("optional")} className="field mt-2" /></label>;
 }

@@ -22,9 +22,9 @@ export function AddressLookup({ compact = false }: { compact?: boolean }) {
   return (
     <form
       onSubmit={submit}
-      className={compact ? "" : "border hairline bg-white/[.025] p-5 md:p-7"}
+      className={compact ? "" : "card p-5 md:p-7"}
     >
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 text-muted">
         <ScanSearch size={16} />
         <span className="eyebrow">Analyze any Robinhood Chain address</span>
       </div>
@@ -33,13 +33,13 @@ export function AddressLookup({ compact = false }: { compact?: boolean }) {
           name="address"
           aria-label="Wallet address"
           placeholder="0x… public wallet address"
-          className="min-w-0 flex-1 border hairline bg-black/30 px-4 py-3 font-mono text-xs outline-none focus:border-white"
+          className="field min-w-0 flex-1 font-mono text-xs"
         />
-        <button className="flex items-center justify-center gap-2 bg-white px-5 py-3 text-xs font-black text-black">
-          ADD &amp; ANALYZE <ArrowRight size={14} />
+        <button className="btn btn-primary">
+          Add &amp; analyze <ArrowRight size={14} />
         </button>
       </div>
-      <p role="alert" className="mt-2 min-h-4 text-xs text-red-400">
+      <p role="alert" className="mt-2 min-h-4 text-xs text-negative">
         {error}
       </p>
     </form>

@@ -56,28 +56,26 @@ async function WalletProfile({address}:{address:string}) {
   ];
   return (
     <div className="container py-12">
-      <div className="grid gap-10 border-b hairline pb-10 lg:grid-cols-[1fr_auto] lg:items-end">
+      <div className="grid gap-10 pb-10 lg:grid-cols-[1fr_auto] lg:items-end">
         <div>
           <div className="flex flex-wrap items-center gap-3">
-            <span className="eyebrow positive">Direct API wallet profile</span>
-            <span
-              className={`flex items-center gap-1 px-2 py-1 text-[9px] font-black ${profile.verified ? "bg-emerald-400 text-black" : "border border-amber-400/40 text-amber-300"}`}
-            >
+            <span className="badge badge-accent">Direct API wallet profile</span>
+            <span className={`badge ${profile.verified ? "badge-positive" : "badge-warning"}`}>
               {profile.verified ? (
                 <ShieldCheck size={11} />
               ) : (
                 <ShieldAlert size={11} />
               )}{" "}
-              {profile.verified ? "VERIFIED AGENT" : "UNVERIFIED WALLET"}
+              {profile.verified ? "Verified agent" : "Unverified wallet"}
             </span>
           </div>
-          <h1 className="mt-4 text-4xl font-black tracking-[-.05em] sm:text-6xl">
+          <h1 className="mt-4 text-4xl font-black tracking-[-.03em] sm:text-5xl">
             {profile.name.toUpperCase()}
           </h1>
-          <p className="mt-4 break-all font-mono text-xs text-neutral-500">
+          <p className="mt-4 break-all font-mono text-xs text-muted">
             {profile.address}
           </p>
-          <p className="mt-5 max-w-2xl text-sm leading-6 text-neutral-400">
+          <p className="mt-5 max-w-2xl text-sm leading-6 text-muted">
             Generated on demand from live Robinhood Chain explorer and market
             APIs. No account, registration, or wallet connection was used.
           </p>
@@ -86,30 +84,30 @@ async function WalletProfile({address}:{address:string}) {
           {profile.registeredAgent && (
             <Link
               href={`/agent/${profile.registeredAgent.slug}`}
-              className="bg-white px-4 py-3 text-xs font-black text-black"
+              className="btn btn-primary"
             >
-              VERIFIED PROFILE
+              Verified profile
             </Link>
           )}
           <a
             href={`https://robinhoodchain.blockscout.com/address/${profile.address}`}
             target="_blank"
             rel="noreferrer"
-            className="flex items-center gap-2 border hairline px-4 py-3 text-xs font-black"
+            className="btn btn-outline"
           >
-            BLOCKSCOUT <ArrowUpRight size={13} />
+            Blockscout <ArrowUpRight size={13} />
           </a>
         </div>
       </div>
       {!!profile.apiWarnings.length && (
-        <div className="border-x border-b border-amber-400/30 bg-amber-400/5 px-4 py-3 text-xs text-amber-200">
+        <div className="mb-6 rounded-xl border border-warning/30 bg-warning-soft px-4 py-3 text-xs text-warning">
           Partial live response: {profile.apiWarnings.join(", ")} could not be
           refreshed. Available endpoint data is still shown below.
         </div>
       )}
-      <div className="grid grid-cols-2 border-b hairline md:grid-cols-4 xl:grid-cols-8">
+      <div className="card grid grid-cols-2 divide-x divide-y divide-line md:grid-cols-4 xl:grid-cols-8 xl:divide-y-0">
         {metrics.map(([label, value]) => (
-          <div className="border-r hairline py-5 pr-3" key={label}>
+          <div className="py-5 px-4" key={label}>
             <span className="eyebrow block text-[9px]">{label}</span>
             <strong
               className={`mt-2 block font-mono text-lg ${label.includes("P&L") || label === "Realized" || label === "Unrealized" ? (String(value).startsWith("-") ? "negative" : "positive") : ""}`}
@@ -119,7 +117,7 @@ async function WalletProfile({address}:{address:string}) {
           </div>
         ))}
       </div>
-      <div className="mt-8 grid gap-px bg-[var(--line)] md:grid-cols-3">
+      <div className="mt-6 grid gap-5 md:grid-cols-3">
         <Info
           icon={<Activity size={16} />}
           label="Last API activity"
@@ -147,17 +145,17 @@ async function WalletProfile({address}:{address:string}) {
         />
       </div>
       <section className="mt-14">
-        <div className="flex items-end justify-between border-b hairline pb-4">
+        <div className="flex items-end justify-between pb-4">
           <div>
             <span className="eyebrow">API token balances</span>
-            <h2 className="mt-2 text-2xl font-black">LIVE HOLDINGS</h2>
+            <h2 className="mt-2 text-2xl font-black tracking-[-.02em]">Live holdings</h2>
           </div>
-          <WalletCards className="text-neutral-600" />
+          <WalletCards className="text-muted" />
         </div>
         {profile.holdings.length ? (
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[760px] text-left text-sm">
-              <thead className="eyebrow text-[9px]">
+          <div className="card overflow-x-auto">
+            <table className="table-clean min-w-[760px]">
+              <thead>
                 <tr>
                   {[
                     "Asset",
@@ -167,7 +165,7 @@ async function WalletProfile({address}:{address:string}) {
                     "Marked value",
                     "Contract",
                   ].map((label) => (
-                    <th className="py-4" key={label}>
+                    <th key={label}>
                       {label}
                     </th>
                   ))}
@@ -176,12 +174,12 @@ async function WalletProfile({address}:{address:string}) {
               <tbody>
                 {profile.holdings.map((holding) => (
                   <tr
-                    className="border-t hairline font-mono"
+                    className="font-mono"
                     key={holding.tokenAddress}
                   >
-                    <td className="py-4 font-black">
+                    <td className="font-black">
                       {holding.symbol}
-                      <span className="ml-2 font-sans text-xs font-normal text-neutral-600">
+                      <span className="ml-2 font-sans text-xs font-normal text-muted">
                         {holding.name}
                       </span>
                     </td>
@@ -197,7 +195,7 @@ async function WalletProfile({address}:{address:string}) {
                     <td>{holding.priceUsd ? usd(holding.valueUsd) : "—"}</td>
                     <td>
                       <a
-                        className="underline"
+                        className="text-brand"
                         target="_blank"
                         rel="noreferrer"
                         href={`https://robinhoodchain.blockscout.com/token/${holding.tokenAddress}`}
@@ -211,20 +209,20 @@ async function WalletProfile({address}:{address:string}) {
             </table>
           </div>
         ) : (
-          <p className="border-b hairline py-10 text-center text-neutral-500">
+          <p className="card py-10 text-center text-muted">
             No ERC-20 balances were returned for this address.
           </p>
         )}
       </section>
       <section className="mt-14">
-        <div className="border-b hairline pb-4">
+        <div className="pb-4">
           <span className="eyebrow">USDG ↔ canonical Stock Token flows</span>
-          <h2 className="mt-2 text-2xl font-black">OBSERVED EXECUTIONS</h2>
+          <h2 className="mt-2 text-2xl font-black tracking-[-.02em]">Observed executions</h2>
         </div>
         {profile.recentTrades.length ? (
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[850px] text-left text-sm">
-              <thead className="eyebrow text-[9px]">
+          <div className="card overflow-x-auto">
+            <table className="table-clean min-w-[850px]">
+              <thead>
                 <tr>
                   {[
                     "UTC time",
@@ -237,7 +235,7 @@ async function WalletProfile({address}:{address:string}) {
                     "Block",
                     "Transaction",
                   ].map((label) => (
-                    <th className="py-4" key={label}>
+                    <th key={label}>
                       {label}
                     </th>
                   ))}
@@ -246,10 +244,10 @@ async function WalletProfile({address}:{address:string}) {
               <tbody>
                 {profile.recentTrades.map((trade) => (
                   <tr
-                    className="border-t hairline font-mono"
+                    className="font-mono"
                     key={`${trade.txHash}-${trade.symbol}-${trade.side}`}
                   >
-                    <td className="py-4">
+                    <td>
                       {new Date(trade.tradedAt).toLocaleString("en-US", {
                         timeZone: "UTC",
                       })}
@@ -267,7 +265,7 @@ async function WalletProfile({address}:{address:string}) {
                     <td>{trade.blockNumber}</td>
                     <td>
                       <a
-                        className="underline"
+                        className="text-brand"
                         target="_blank"
                         rel="noreferrer"
                         href={`https://robinhoodchain.blockscout.com/tx/${trade.txHash}`}
@@ -281,27 +279,27 @@ async function WalletProfile({address}:{address:string}) {
             </table>
           </div>
         ) : (
-          <p className="border-b hairline py-10 text-center text-neutral-500">
+          <p className="card py-10 text-center text-muted">
             No qualifying Stock Token/USDG executions were found in the loaded
             API window.
           </p>
         )}
       </section>
       <section className="mt-14">
-        <div className="border-b hairline pb-4">
+        <div className="pb-4">
           <span className="eyebrow">Explorer transaction endpoint</span>
-          <h2 className="mt-2 text-2xl font-black">RAW ACTIVITY</h2>
+          <h2 className="mt-2 text-2xl font-black tracking-[-.02em]">Raw activity</h2>
         </div>
-        <div>
+        <div className="card divide-y divide-line">
           {profile.recentTransactions.slice(0, 20).map((transaction) => (
             <a
               target="_blank"
               rel="noreferrer"
               href={`https://robinhoodchain.blockscout.com/tx/${transaction.hash}`}
               key={transaction.hash}
-              className="grid gap-2 border-b hairline py-4 text-xs transition hover:bg-white/[.025] md:grid-cols-[180px_1fr_120px_100px]"
+              className="grid gap-2 px-5 py-4 text-xs transition hover:bg-surface-2 md:grid-cols-[180px_1fr_120px_100px]"
             >
-              <time className="font-mono text-neutral-500">
+              <time className="font-mono text-muted">
                 {new Date(transaction.timestamp).toLocaleString("en-US", {
                   timeZone: "UTC",
                 })}{" "}
@@ -326,12 +324,12 @@ async function WalletProfile({address}:{address:string}) {
       <div className="mt-14">
         <AddressLookup compact />
       </div>
-      <p className="mt-6 text-xs leading-5 text-neutral-600">
+      <p className="mt-6 text-xs leading-5 text-muted">
         <ShieldAlert className="mr-1 inline" size={12} /> Observed P&amp;L is
         reconstructed only from the API history window and is not an identity
         claim or investment advice. Unknown acquisition lots are valued
         conservatively at disposal price.{" "}
-        <Link href="/methodology" className="underline">
+        <Link href="/methodology" className="text-brand">
           Methodology
         </Link>
         .
@@ -350,8 +348,8 @@ function Info({
   value: string;
 }) {
   return (
-    <div className="bg-[var(--ink)] p-5">
-      <div className="flex items-center gap-2 text-neutral-500">
+    <div className="card p-5">
+      <div className="flex items-center gap-2 text-muted">
         {icon}
         <span className="eyebrow text-[9px]">{label}</span>
       </div>
@@ -361,5 +359,5 @@ function Info({
 }
 
 function WalletLoading({address}:{address:string}) {
-  return <div className="container py-12"><span className="eyebrow positive">Querying live APIs</span><h1 className="mt-4 text-4xl font-black tracking-[-.05em] sm:text-6xl">BUILDING WALLET PROFILE</h1><p className="mt-4 font-mono text-xs text-neutral-500">{address}</p><div className="mt-10 h-1 overflow-hidden bg-white/10"><div className="h-full w-1/3 animate-pulse bg-emerald-400"/></div><div className="mt-6 grid gap-px bg-[var(--line)] md:grid-cols-3">{["TRANSACTIONS","TOKEN BALANCES","STOCK TOKEN TRADES"].map(label=><div key={label} className="h-32 animate-pulse bg-[var(--ink)] p-5"><span className="eyebrow">{label}</span><p className="mt-5 text-sm text-neutral-600">Fetching from Blockscout and Robinhood…</p></div>)}</div></div>;
+  return <div className="container py-12"><span className="badge badge-accent">Querying live APIs</span><h1 className="mt-4 text-4xl font-black tracking-[-.03em] sm:text-5xl">Building wallet profile</h1><p className="mt-4 font-mono text-xs text-muted">{address}</p><div className="mt-10 h-1 overflow-hidden rounded-full bg-surface-2"><div className="h-full w-1/3 animate-pulse rounded-full bg-brand"/></div><div className="mt-6 grid gap-5 md:grid-cols-3">{["Transactions","Token balances","Stock Token trades"].map(label=><div key={label} className="card h-32 animate-pulse p-5"><span className="eyebrow">{label}</span><p className="mt-5 text-sm text-muted">Fetching from Blockscout and Robinhood…</p></div>)}</div></div>;
 }

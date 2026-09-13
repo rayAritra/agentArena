@@ -12,20 +12,20 @@ export default async function StockTokensPage() {
   const alerts = withMarkets.filter((token) => Math.abs(token.deviation ?? 0) >= .75);
   return <div className="container py-12">
     <span className="eyebrow">Live market integrity · {tokens.length} official assets</span>
-    <h1 className="mt-4 text-5xl font-black tracking-[-.05em] md:text-7xl">STOCK TOKEN<br /><span className="text-neutral-600">WATCH</span></h1>
-    <p className="mt-5 max-w-2xl text-neutral-500">Real Uniswap market prices from DEX Screener compared with Robinhood’s official multiplier-adjusted references. Assets without an indexed liquid market are marked unavailable.</p>
-    <div className="mt-10 grid grid-cols-3 border-y hairline"><Metric label="DEX markets" value={withMarkets.length.toLocaleString()} /><Metric label="Reference assets" value={tokens.length.toLocaleString()} /><Metric label="Warnings" value={alerts.length.toLocaleString()} tone={alerts.length ? "warning" : "positive"} /></div>
-    <div className="mt-12 grid gap-px bg-[var(--line)] sm:grid-cols-2 xl:grid-cols-4">{rows.map((token) => {
+    <h1 className="mt-4 text-5xl font-black tracking-[-.03em] md:text-6xl">Stock Token watch</h1>
+    <p className="mt-5 max-w-2xl text-muted">Real Uniswap market prices from DEX Screener compared with Robinhood’s official multiplier-adjusted references. Assets without an indexed liquid market are marked unavailable.</p>
+    <div className="card mt-10 grid grid-cols-3 divide-x divide-line"><Metric label="DEX markets" value={withMarkets.length.toLocaleString()} /><Metric label="Reference assets" value={tokens.length.toLocaleString()} /><Metric label="Warnings" value={alerts.length.toLocaleString()} tone={alerts.length ? "warning" : "positive"} /></div>
+    <div className="mt-12 grid gap-5 sm:grid-cols-2 xl:grid-cols-4">{rows.map((token) => {
       const severity = token.deviation === null ? "unavailable" : depegSeverity(token.deviation);
-      return <article className="bg-[var(--ink)] p-6" key={token.symbol}>
-        <div className="flex justify-between"><span className="text-2xl font-black">{token.symbol}</span><span className={`eyebrow ${severity === "normal" ? "positive" : severity === "critical" ? "negative" : severity === "unavailable" ? "text-neutral-600" : "warning"}`}>● {severity}</span></div>
+      return <article className="card card-hover p-6" key={token.symbol}>
+        <div className="flex justify-between"><span className="text-2xl font-black">{token.symbol}</span><span className={`badge ${severity === "normal" ? "badge-positive" : severity === "critical" ? "badge-negative" : severity === "unavailable" ? "badge-neutral" : "badge-warning"}`}>{severity}</span></div>
         <strong className="mono mt-10 block text-4xl">{token.price === null ? "—" : usd(token.price)}</strong>
-        <div className="mt-4 flex justify-between border-t hairline pt-4 text-xs"><span className="text-neutral-500">Reference {usd(token.reference)}</span><span className={`mono ${token.deviation === null ? "text-neutral-600" : token.deviation >= 0 ? "positive" : "negative"}`}>{token.deviation === null ? "NO MARKET" : percent(token.deviation)}</span></div>
-        <div className="mt-8 flex justify-between"><span className="eyebrow">24H {token.day === null ? "—" : percent(token.day)}</span><span className="eyebrow">VOL {token.volume === null ? "—" : usd(token.volume, true)}</span></div>
+        <div className="mt-4 flex justify-between border-t border-line pt-4 text-xs"><span className="text-muted">Reference {usd(token.reference)}</span><span className={`mono ${token.deviation === null ? "text-muted" : token.deviation >= 0 ? "positive" : "negative"}`}>{token.deviation === null ? "No market" : percent(token.deviation)}</span></div>
+        <div className="mt-8 flex justify-between"><span className="eyebrow">24H {token.day === null ? "—" : percent(token.day)}</span><span className="eyebrow">Vol {token.volume === null ? "—" : usd(token.volume, true)}</span></div>
       </article>;
     })}</div>
-    <div className="mt-12 border-t hairline pt-5 text-xs text-neutral-600">DEX market: DEX Screener · Official reference and asset registry: Robinhood RHJ API · 15-second cache · unavailable values are never guessed.</div>
+    <div className="mt-12 border-t border-line pt-5 text-xs text-muted">DEX market: DEX Screener · Official reference and asset registry: Robinhood RHJ API · 15-second cache · unavailable values are never guessed.</div>
   </div>;
 }
 
-function Metric({ label, value, tone = "" }: { label: string; value: string; tone?: string }) { return <div className="border-r hairline p-5"><span className="eyebrow block">{label}</span><strong className={`mono mt-2 block text-2xl ${tone}`}>{value}</strong></div>; }
+function Metric({ label, value, tone = "" }: { label: string; value: string; tone?: string }) { return <div className="p-5"><span className="eyebrow block">{label}</span><strong className={`mono mt-2 block text-2xl ${tone}`}>{value}</strong></div>; }

@@ -48,16 +48,16 @@ export function SearchDialog() {
   }
 
   return <>
-    <button onClick={() => setOpen(true)} aria-label="Open search" className="focus-ring grid size-9 place-items-center border hairline hover:bg-white/5"><Search size={15} /></button>
-    <AnimatePresence>{open && <motion.div className="fixed inset-0 z-[100] bg-black/80 p-4 pt-[12vh] backdrop-blur-sm" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onMouseDown={() => setOpen(false)}>
-      <motion.div role="dialog" aria-modal="true" aria-label="Global search" onMouseDown={(event) => event.stopPropagation()} initial={{ opacity: 0, y: -12, scale: .98 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: -8 }} className="mx-auto max-w-2xl border hairline bg-[var(--panel)] shadow-2xl">
-        <div className="flex items-center gap-3 border-b hairline p-4"><Search size={17} /><input autoFocus value={query} onKeyDown={keys} onChange={(event) => { setQuery(event.target.value); if (!event.target.value.trim()) setResults([]); }} placeholder="Search agents, wallets, Stock Tokens, battles…" className="w-full bg-transparent text-sm outline-none" /><button onClick={() => setOpen(false)} aria-label="Close search"><X size={17} /></button></div>
-        <div className="p-2">{query && results.map((entry, index) => <Link onMouseEnter={() => setActive(index)} onClick={() => setOpen(false)} href={entry.href} className={`flex items-center justify-between p-4 transition ${active === index ? "bg-white/5" : ""}`} key={`${entry.href}-${entry.label}`}><span><b className="block">{entry.label}</b><small className="mono text-neutral-600">{entry.meta}</small></span><span className="mono text-xs text-neutral-700">{String(index + 1).padStart(2, "0")}</span></Link>)}
-          {loading && query && <p className="p-8 text-center text-sm text-neutral-500">SEARCHING LIVE INDEX…</p>}
-          {!loading && query && !results.length && <p className="p-8 text-center text-sm text-neutral-500">NO RESULTS IN THE ARENA.</p>}
-          {!query && <p className="p-8 text-center text-sm text-neutral-500">TYPE A NAME, WALLET, TICKER, OR BATTLE.</p>}
+    <button onClick={() => setOpen(true)} aria-label="Open search" className="focus-ring grid size-9 place-items-center rounded-full border border-line text-muted transition hover:text-ink"><Search size={15} /></button>
+    <AnimatePresence>{open && <motion.div className="fixed inset-0 z-[100] bg-black/60 p-4 pt-[12vh] backdrop-blur-sm" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onMouseDown={() => setOpen(false)}>
+      <motion.div role="dialog" aria-modal="true" aria-label="Global search" onMouseDown={(event) => event.stopPropagation()} initial={{ opacity: 0, y: -12, scale: .98 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: -8 }} className="card mx-auto max-w-2xl overflow-hidden shadow-2xl">
+        <div className="flex items-center gap-3 border-b border-line p-4"><Search size={17} className="text-muted" /><input autoFocus value={query} onKeyDown={keys} onChange={(event) => { setQuery(event.target.value); if (!event.target.value.trim()) setResults([]); }} placeholder="Search agents, wallets, Stock Tokens, battles…" className="w-full bg-transparent text-sm outline-none" /><button onClick={() => setOpen(false)} aria-label="Close search" className="text-muted hover:text-ink"><X size={17} /></button></div>
+        <div className="p-2">{query && results.map((entry, index) => <Link onMouseEnter={() => setActive(index)} onClick={() => setOpen(false)} href={entry.href} className={`flex items-center justify-between rounded-xl p-4 transition ${active === index ? "bg-surface-2" : ""}`} key={`${entry.href}-${entry.label}`}><span><b className="block">{entry.label}</b><small className="mono text-muted">{entry.meta}</small></span><span className="mono text-xs text-muted-2">{String(index + 1).padStart(2, "0")}</span></Link>)}
+          {loading && query && <p className="p-8 text-center text-sm text-muted">Searching live index…</p>}
+          {!loading && query && !results.length && <p className="p-8 text-center text-sm text-muted">No results in the arena.</p>}
+          {!query && <p className="p-8 text-center text-sm text-muted">Type a name, wallet, ticker, or battle.</p>}
         </div>
-        <div className="border-t hairline p-3 text-[10px] uppercase tracking-widest text-neutral-600">↑↓ Navigate · Enter Open · Esc Close</div>
+        <div className="border-t border-line p-3 text-[10px] uppercase tracking-widest text-muted-2">↑↓ Navigate · Enter Open · Esc Close</div>
       </motion.div>
     </motion.div>}</AnimatePresence>
   </>;
