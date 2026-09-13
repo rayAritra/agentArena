@@ -10,17 +10,18 @@ export const dynamic = "force-dynamic";
 
 export default async function Page() {
   const [agents, activity, tokens, battles, discovered] = await Promise.all([getAgents(), getActivity(), getStockTokens(), getBattles(), getDiscoveredWallets().catch(() => [])]);
-  const stats = summarizeAgents(agents);
+  const verifiedAgents = agents.filter((agent) => agent.verified);
+  const stats = summarizeAgents(verifiedAgents);
 
   return (
     <>
       <ScrollProgress />
       <Hero stats={stats} />
-      {!!agents.length && <Ticker agents={agents} />}
+      {!!verifiedAgents.length && <Ticker agents={verifiedAgents} />}
       <StatStrip stats={stats} />
       <FeatureGrid />
       <TrustPanel />
-      <AgentMarketplace agents={agents} />
+      <AgentMarketplace agents={verifiedAgents} />
       <WalletDemo discovered={discovered} />
       <MarketAndBattle tokens={tokens} battles={battles} />
       <ActivityTape activity={activity} />

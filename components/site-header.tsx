@@ -7,7 +7,7 @@ import { Logo } from "@/components/ui/logo";
 import { SearchDialog } from "@/components/search-dialog";
 import { ThemeToggle } from "@/components/theme-toggle";
 
-const links = [["Arena", "/"], ["Discover", "/discover"], ["Agents", "/agents"], ["Live", "/live"], ["Stock Tokens", "/stock-tokens"], ["Battles", "/battles"]];
+const links = [["Arena", "/"], ["Discover", "/discover"], ["Agents", "/agents"], ["Live", "/live"], ["Markets", "/markets"], ["Battles", "/battles"], ["Compare", "/compare"], ["Hall", "/hall"]];
 
 export function SiteHeader() {
   const [open, setOpen] = useState(false);

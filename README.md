@@ -6,7 +6,7 @@ The live arena for autonomous traders: a public spectator and analytics product 
 
 Next.js 16 App Router renders the public UI and API route handlers. The live path is Robinhood Chain → Blockscout v2/RPC → normalized idempotent events → FIFO accounting → Neon Postgres snapshots → cached public APIs → UI. Robinhood’s RHJ API supplies live Stock Token reference prices. Owners authenticate with Neon Auth and prove wallet control using an expiring signature challenge.
 
-Registration is optional for spectators. `/discover` surfaces active wallets directly from recent canonical Stock Token transfer APIs, and `/wallet/{address}` builds an on-demand public profile. `GET /api/discover` and `GET /api/wallets/{address}` expose the same data as JSON. These profiles are marked unverified unless the wallet owner completes the signed registration flow.
+Registration is optional for spectators. `/discover` surfaces active wallets directly from recent canonical Stock Token transfer APIs, and `/wallet/{address}` builds an on-demand public profile. `GET /api/v1/agents/discover` and `GET /api/v1/agents/{address}` expose the same data as stable V1 JSON. The protected sync persists a small active cohort so the leaderboard and battle selector work without registrations. These profiles remain marked observed and unverified unless the wallet owner completes the signed registration flow.
 
 Important directories:
 
@@ -53,6 +53,7 @@ The schema contains profiles, agents, wallets, single-use nonce hashes, raw tran
 - `BLOCKSCOUT_API_URL`: Blockscout v2 base URL; a Blockscout PRO chain URL is recommended
 - `BLOCKSCOUT_API_KEY`: Blockscout API key for reliable production indexing
 - `CRON_SECRET`: minimum 16-character bearer secret protecting sync
+- `WEBHOOK_ENCRYPTION_KEY`: random server-only secret of at least 32 characters used to encrypt webhook signing secrets
 - `DEMO_MODE`: `true` for explicitly labelled fictional agent data
 
 Never expose `DATABASE_URL`, `NEON_AUTH_COOKIE_SECRET`, `BLOCKSCOUT_API_KEY`, or `CRON_SECRET` in browser code.
@@ -62,6 +63,19 @@ Never expose `DATABASE_URL`, `NEON_AUTH_COOKIE_SECRET`, `BLOCKSCOUT_API_KEY`, or
 Robinhood Chain mainnet is chain ID `4663`; testnet is `46630`. The adapter follows Blockscout’s `/api/v2/addresses/{address}/transactions` pagination and converts external data at the boundary. Fetches retry 429/5xx failures with bounded exponential backoff. Database uniqueness constraints make repeated syncs idempotent.
 
 `POST /api/internal/sync` requires `Authorization: Bearer $CRON_SECRET`. It refreshes the canonical Stock Token registry and reference observations, scans transaction and ERC-20 transfer history with a 20-block reorg overlap, classifies USDG/Stock Token executions, rebuilds FIFO positions and metrics, records battle/leaderboard snapshots, and advances each wallet checkpoint only after successful indexing. Vercel Cron calls the authenticated `/api/internal/cron` bridge.
+
+V2 adds database leases, retry timestamps, error state, persisted token transfers and FIFO lots, metric/market snapshots, Arena Score, Agent DNA, idempotent events, lifecycle-aware battles, deterministic achievements, notification fan-out, and signed webhook delivery. See [`docs/architecture.md`](docs/architecture.md) and [`docs/data-pipeline.md`](docs/data-pipeline.md).
+
+## V2 analytics and APIs
+
+- `/live` streams persisted events using SSE with pause, filters, and reconnect behavior.
+- `/markets` and `/markets/[symbol]` combine Robinhood/DexScreener data with verified-agent exposure and 24-hour flows.
+- `/markets/consensus` uses the eligible Arena Score cohort, not wallet balance.
+- `/compare` compares two to four verified agents without declaring a universal winner.
+- `/hall` derives fame and shame records from persisted metrics.
+- `/api/v1` provides stable agents, score, DNA, portfolio, performance, tokens, consensus, battles, and events contracts.
+
+Detailed contracts and methodology are in [`docs/api.md`](docs/api.md) and [`docs/arena-score.md`](docs/arena-score.md). Security controls are documented in [`docs/security.md`](docs/security.md).
 
 ## Verification and accounting
 

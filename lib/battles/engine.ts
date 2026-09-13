@@ -1,0 +1,4 @@
+export type BattleMetric="total_return"|"realized_pnl"|"risk_adjusted_return"|"arena_score_change";
+export type BattleCompetitor={agentId:string;baselineEquity:number;currentEquity:number;baselineRealizedPnl:number;currentRealizedPnl:number;baselineArenaScore:number;currentArenaScore:number;maxDrawdown:number};
+export function battleValue(mode:BattleMetric,x:BattleCompetitor){const change=x.currentEquity-x.baselineEquity,ret=x.baselineEquity?change/x.baselineEquity*100:0;if(mode==="realized_pnl")return x.currentRealizedPnl-x.baselineRealizedPnl;if(mode==="arena_score_change")return x.currentArenaScore-x.baselineArenaScore;if(mode==="risk_adjusted_return")return ret/(1+Math.abs(x.maxDrawdown));return ret}
+export function rankBattle(mode:BattleMetric,competitors:BattleCompetitor[]){return competitors.map(x=>({...x,value:battleValue(mode,x)})).sort((a,b)=>b.value-a.value)}

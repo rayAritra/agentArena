@@ -1,0 +1,1 @@
+import{getTokenIntelligence}from"@/lib/data/markets";import{fail,ok}from"@/lib/api/response";export async function GET(_:Request,{params}:{params:Promise<{symbol:string}>}){const data=await getTokenIntelligence((await params).symbol);return data?ok(data):fail("NOT_FOUND","Unknown Stock Token",404)}

@@ -1,0 +1,89 @@
+import { randomUUID } from "node:crypto";
+import { z } from "zod";
+import { getCurrentUser } from "@/lib/auth/server";
+import { getSql } from "@/lib/neon/db";
+import { hasTrustedOrigin } from "@/lib/security/origin";
+import { fail, ok } from "@/lib/api/response";
+import { ensureObservedCompetitor } from "@/lib/data/observed-competitors";
+import { processBattles } from "@/lib/battles/jobs";
+const create = z.object({
+    name: z.string().min(3).max(80),
+    description: z.string().max(300).default(""),
+    agents: z
+      .array(z.string().regex(/^(?:[a-z0-9-]{1,80}|0x[0-9a-fA-F]{40})$/))
+      .min(2)
+      .max(4),
+    duration: z.enum(["1h", "24h", "7d", "30d"]),
+    scoringMode: z.enum([
+      "total_return",
+      "realized_pnl",
+      "risk_adjusted_return",
+      "arena_score_change",
+    ]),
+    startsAt: z.string().datetime().optional(),
+  }),
+  seconds = { "1h": 3600, "24h": 86400, "7d": 604800, "30d": 2592000 };
+export async function GET() {
+  const sql = getSql();
+  if (!sql) return ok([]);
+  return ok(
+    await sql.query(
+      "select b.id,b.slug,b.name,b.description,b.starts_at,b.ends_at,b.status,b.scoring_mode,json_agg(json_build_object('slug',a.slug,'name',a.name,'address',w.address,'verified',a.verified_at is not null,'baselineEquityUsd',bp.baseline_equity_usd)) participants from battles b left join battle_participants bp on bp.battle_id=b.id left join agents a on a.id=bp.agent_id left join agent_wallets w on w.agent_id=a.id group by b.id order by b.starts_at desc limit 100",
+    ),
+  );
+}
+export async function POST(request: Request) {
+  if (!hasTrustedOrigin(request))
+    return fail("UNTRUSTED_ORIGIN", "Untrusted request origin", 403);
+  const user = await getCurrentUser(),
+    sql = getSql();
+  if (!user) return fail("UNAUTHORIZED", "Authentication required", 401);
+  if (!sql) return fail("DATABASE_UNAVAILABLE", "Database unavailable", 503);
+  const parsed = create.safeParse(await request.json());
+  if (!parsed.success)
+    return fail("INVALID_BODY", "Invalid battle configuration");
+  const unique = [...new Set(parsed.data.agents)];
+  if (unique.length !== parsed.data.agents.length)
+    return fail("INVALID_PARTICIPANTS", "Competitors must be unique");
+  for (const value of unique)
+    if (/^0x[0-9a-fA-F]{40}$/.test(value))
+      await ensureObservedCompetitor(sql, value);
+  const agents = (await sql.query(
+    "select a.id,a.slug from agents a join agent_wallets w on w.agent_id=a.id where a.slug=any($1::text[]) or lower(w.address)=any($2::text[])",
+    [unique, unique.map((x) => x.toLowerCase())],
+  )) as Array<{ id: string; slug: string }>;
+  if (agents.length !== unique.length)
+    return fail(
+      "INVALID_PARTICIPANTS",
+      "Every competitor must be a registered agent or analyzable wallet",
+      422,
+    );
+  const start = new Date(parsed.data.startsAt ?? Date.now()),
+    end = new Date(start.getTime() + seconds[parsed.data.duration] * 1000),
+    slug = `${parsed.data.name
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-|-$/g, "")}-${randomUUID().slice(0, 8)}`,
+    rows = await sql.query(
+      "insert into battles(slug,name,description,starts_at,ends_at,starting_balance,rules,status,scoring_mode,created_by) values($1,$2,$3,$4,$5,0,$6::jsonb,'scheduled',$7,$8) returning *",
+      [
+        slug,
+        parsed.data.name,
+        parsed.data.description,
+        start.toISOString(),
+        end.toISOString(),
+        JSON.stringify({ duration: parsed.data.duration }),
+        parsed.data.scoringMode,
+        user.id,
+      ],
+    ),
+    battle = rows[0] as { id: string };
+  await sql.transaction(
+    agents.map(
+      (a) =>
+        sql`insert into battle_participants(battle_id,agent_id) values(${battle.id},${a.id})`,
+    ),
+  );
+  if (start.getTime() <= Date.now()) await processBattles(sql);
+  return ok({ ...rows[0], participants: agents }, {}, 201);
+}
