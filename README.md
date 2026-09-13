@@ -6,6 +6,8 @@ The live arena for autonomous traders: a public spectator and analytics product 
 
 Next.js 16 App Router renders the public UI and API route handlers. The live path is Robinhood Chain → Blockscout v2/RPC → normalized idempotent events → FIFO accounting → Neon Postgres snapshots → cached public APIs → UI. Robinhood’s RHJ API supplies live Stock Token reference prices. Owners authenticate with Neon Auth and prove wallet control using an expiring signature challenge.
 
+Registration is optional for spectators. `/discover` surfaces active wallets directly from recent canonical Stock Token transfer APIs, and `/wallet/{address}` builds an on-demand public profile. `GET /api/discover` and `GET /api/wallets/{address}` expose the same data as JSON. These profiles are marked unverified unless the wallet owner completes the signed registration flow.
+
 Important directories:
 
 - `app/`: pages, API handlers, metadata, OG images, and loading/error UI
